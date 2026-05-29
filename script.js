@@ -95,6 +95,7 @@ function addTransaction(type) {
         syncOfflineDataToGoogle();
     }
 }
+// Offline သွင်းထားသမျှကို Google Sheet ထဲ အလိုအလျောက် ပို့ပေးမည့် စနစ်
 function syncOfflineDataToGoogle() {
     if (!navigator.onLine || unsynced_items.length === 0) return;
 
@@ -105,8 +106,8 @@ function syncOfflineDataToGoogle() {
         type: item_to_sync.type,
         amount: item_to_sync.amount,
         description: item_to_sync.description,
-        date: item_to_sync.date,   // Google Sheet သို့ ရက်စွဲပါ ပို့ရန်
-        time: item_to_sync.time    // Google Sheet သို့ အချိန်ပါ ပို့ရန်
+        date: item_to_sync.date,   
+        time: item_to_sync.time    
     };
 
     fetch(google_script_url, {
@@ -124,6 +125,7 @@ function syncOfflineDataToGoogle() {
     .catch(err => console.log("လိုင်းမတည်ငြိမ်သေးသဖြင့် ခေတ္တစောင့်ဆိုင်းနေပါသည်"));
 }
 
+// မျက်နှာပြင်ပေါ်တွင် စာရင်းများ ပြသခြင်း
 function render() {
     const list = document.getElementById('transaction-list');
     list.innerHTML = '';
@@ -131,18 +133,16 @@ function render() {
     let totalIncome = 0;
     let totalExpense = 0;
 
-    const filterDate = document.getElementById('filter-date').value; // ပြက္ခဒိန်က ရွေးထားတဲ့ရက်ကို ယူတယ်
+    const filterDate = document.getElementById('filter-date').value; 
 
-    // ပြက္ခဒိန်မှာ ရက်စွဲရွေးထားရင် အဲဒီရက်တူတာပဲ စစ်ထုတ်မယ်၊ မရွေးထားရင် အကုန်ပြမယ်
     const displayedTransactions = filterDate 
-        ? transactions.filter(t => t.date === filterDate) 
+        ? transactions.filter(t => t.date && t.date.includes(filterDate)) 
         : transactions;
 
     if (displayedTransactions.length === 0) {
         list.innerHTML = '<li>📭 ဤရက်စွဲတွင် မှတ်တမ်းမရှိသေးပါ။</li>';
     }
 
-    // စစ်ထုတ်ထားတဲ့ list ကိုပဲ screen ပေါ်တင်ပြမယ်
     displayedTransactions.forEach(t => {
         const li = document.createElement('li');
         li.classList.add(t.type === 'ဝင်ငွေ' ? 'inc' : 'exp');
@@ -150,8 +150,20 @@ function render() {
         const is_unsynced = unsynced_items.some(item => item.id === t.id);
         const sync_icon = is_unsynced ? " ☁️ (Offline)" : "";
 
-        // စာရင်းရဲ့ အောက်ခြေမှာ ဘယ်ရက် ဘယ်အချိန် သွင်းထားလဲဆိုတာကို သေးသေးလေး ပြထားပါမယ်
-        const displayDate = t.date ? t.date : "ရက်စွဲမရှိ";
+        // 📅 Google Sheet က ပြန်လာတဲ့ ရက်စွဲ format ကို သန့်စင်ခြင်း
+        let displayDate = t.date ? t.date : "ရက်စွဲမရှိ";
+        if (displayDate.includes("T")) { 
+            displayDate = displayDate.split("T")[0]; // အကယ်၍ Standard Date ဖြစ်နေရင် ဖြတ်ယူမယ်
+        } else if (displayDate.length > 10 && displayDate.includes(" ")) {
+            // Google က စာသားရှည်ကြီး ပြန်ပေးလာရင် YYYY-MM-DD ပြောင်းလဲယူမည့်အပိုင်း
+            try {
+                const d = new Date(displayDate);
+                if(!isNaN(d.getTime())) {
+                    displayDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                }
+            } catch(e){}
+        }
+        
         const displayTime = t.time ? t.time : "";
 
         li.innerHTML = `
@@ -176,8 +188,8 @@ function render() {
 }
 
 function clearFilter() {
-    document.getElementById('filter-date').value = ''; // ပြက္ခဒိန်ကို reset လုပ်တယ်
-    render(); // စာရင်းအားလုံး ပြန်ပြမယ်
+    document.getElementById('filter-date').value = ''; 
+    render(); 
 }
 
 function deleteItem(id) {
