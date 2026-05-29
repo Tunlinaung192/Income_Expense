@@ -51,12 +51,8 @@ function addTransaction(type) {
         return;
     }
 
-    // မြန်မာလို ရိုက်ထားခဲ့ရင် အင်္ဂလိပ်ဂဏန်း ပြောင်းပစ်မယ်
     let cleanAmount = convertBurmeseToEnglish(amountInput.value);
-    
-    // ကော်မာ (,) တွေ သို့မဟုတ် ဟာကွက်တွေ ပါလာရင် ဖယ်ထုတ်ပစ်မယ်
     cleanAmount = cleanAmount.replace(/,/g, '').trim();
-    
     const parsedAmount = parseFloat(cleanAmount);
 
     if (isNaN(parsedAmount)) {
@@ -64,11 +60,24 @@ function addTransaction(type) {
         return;
     }
 
+    // 📅 လက်ရှိ နေ့စွဲနှင့် အချိန်ကို စက်ထဲကနေ Auto ယူခြင်း
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const date = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const formattedDate = `${year}-${month}-${date}`; // ရှာရလွယ်အောင် သိမ်းမယ့် ပုံစံ (YYYY-MM-DD)
+    const formattedTime = `${hours}:${minutes}`;
+
     const new_item = {
         id: Date.now().toString(),
         type: type,
         amount: parsedAmount,
-        description: descInput.value
+        description: descInput.value,
+        date: formattedDate, // ရက်စွဲအသစ် ထည့်သွင်းမှတ်သားခြင်း
+        time: formattedTime  // အချိန်အသစ် ထည့်သွင်းမှတ်သားခြင်း
     };
 
     transactions.push(new_item);
@@ -95,7 +104,9 @@ function syncOfflineDataToGoogle() {
         id: item_to_sync.id,
         type: item_to_sync.type,
         amount: item_to_sync.amount,
-        description: item_to_sync.description
+        description: item_to_sync.description,
+        date: item_to_sync.date,   // Google Sheet သို့ ရက်စွဲပါ ပို့ရန်
+        time: item_to_sync.time    // Google Sheet သို့ အချိန်ပါ ပို့ရန်
     };
 
     fetch(google_script_url, {
@@ -120,20 +131,35 @@ function render() {
     let totalIncome = 0;
     let totalExpense = 0;
 
-    if (transactions.length === 0) {
-        list.innerHTML = '<li>📭 မှတ်တမ်းမရှိသေးပါ။</li>';
+    const filterDate = document.getElementById('filter-date').value; // ပြက္ခဒိန်က ရွေးထားတဲ့ရက်ကို ယူတယ်
+
+    // ပြက္ခဒိန်မှာ ရက်စွဲရွေးထားရင် အဲဒီရက်တူတာပဲ စစ်ထုတ်မယ်၊ မရွေးထားရင် အကုန်ပြမယ်
+    const displayedTransactions = filterDate 
+        ? transactions.filter(t => t.date === filterDate) 
+        : transactions;
+
+    if (displayedTransactions.length === 0) {
+        list.innerHTML = '<li>📭 ဤရက်စွဲတွင် မှတ်တမ်းမရှိသေးပါ။</li>';
     }
 
-    transactions.forEach(t => {
+    // စစ်ထုတ်ထားတဲ့ list ကိုပဲ screen ပေါ်တင်ပြမယ်
+    displayedTransactions.forEach(t => {
         const li = document.createElement('li');
         li.classList.add(t.type === 'ဝင်ငွေ' ? 'inc' : 'exp');
         
         const is_unsynced = unsynced_items.some(item => item.id === t.id);
         const sync_icon = is_unsynced ? " ☁️ (Offline)" : "";
 
+        // စာရင်းရဲ့ အောက်ခြေမှာ ဘယ်ရက် ဘယ်အချိန် သွင်းထားလဲဆိုတာကို သေးသေးလေး ပြထားပါမယ်
+        const displayDate = t.date ? t.date : "ရက်စွဲမရှိ";
+        const displayTime = t.time ? t.time : "";
+
         li.innerHTML = `
-            <span>${t.description}${sync_icon}</span> 
             <div>
+                <span style="display: block; font-weight: bold;">${t.description}${sync_icon}</span>
+                <span style="font-size: 11px; color: #7f8c8d;">📅 ${displayDate} 🕒 ${displayTime}</span>
+            </div>
+            <div style="text-align: right;">
                 <b>${t.type === 'ဝင်ငွေ' ? '+' : '-'}${Number(t.amount).toLocaleString()} ကျပ်</b>
                 <button onclick="deleteItem('${t.id}')" style="background: none; color: #e74c3c; border: none; font-size: 16px; margin-left: 10px; padding: 0; cursor: pointer; display: inline;">❌</button>
             </div>
@@ -147,6 +173,11 @@ function render() {
     document.getElementById('total-income').innerText = totalIncome.toLocaleString();
     document.getElementById('total-expense').innerText = totalExpense.toLocaleString();
     document.getElementById('net-balance').innerText = (totalIncome - totalExpense).toLocaleString();
+}
+
+function clearFilter() {
+    document.getElementById('filter-date').value = ''; // ပြက္ခဒိန်ကို reset လုပ်တယ်
+    render(); // စာရင်းအားလုံး ပြန်ပြမယ်
 }
 
 function deleteItem(id) {
