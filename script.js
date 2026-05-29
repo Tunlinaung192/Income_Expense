@@ -41,6 +41,10 @@ function addTransaction(type) {
         description: descInput.value
     };
 
+    // ခလုတ်ကို ခဏပိတ်ထားပြီး စောင့်ခိုင်းခြင်း (မတော်တဆ နှစ်ခါ အမြန်နှိပ်မိရင် Double မဝင်အောင်)
+    const list = document.getElementById('transaction-list');
+    list.innerHTML = '<li>⌛ Google Sheet ထဲသို့ စာရင်းသွင်းနေပါသည်...</li>';
+
     // Google Sheet ထံသို့ Data ပို့ခြင်း
     fetch(google_script_url, {
         method: "POST",
@@ -56,6 +60,10 @@ function addTransaction(type) {
             amountInput.value = '';
             descInput.value = '';
         }
+    })
+    .catch(error => {
+        alert("စာရင်းသွင်းရတာ အဆင်မပြေပါ။ ဖုန်းလိုင်း သို့မဟုတ် URL လွဲနေနိုင်ပါသည်။");
+        render();
     });
 }
 
@@ -84,7 +92,7 @@ function render() {
         list.appendChild(li);
 
         if (t.type === 'ဝင်ငွေ') totalIncome += Number(t.amount);
-        else totalExpense += Number(t.amount;
+        else totalExpense += Number(t.amount); // 👈 အရင်က ဒီနေရာမှာ ကွင်းပိတ် ) ကျန်ခဲ့လို့ပါ
     });
 
     document.getElementById('total-income').innerText = totalIncome.toLocaleString();
@@ -113,6 +121,9 @@ function deleteItem(id) {
     if (inputPassword === savedDeletePassword) {
         if(confirm("⚠️ ဤမှတ်တမ်းကို Google Sheet ထဲမှပါ အပြီးဖျက်ပစ်ရန် သေချာပါသလား?")) {
             
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = '<li>⌛ Google Sheet ထဲမှ ဖျက်နေပါသည်...</li>';
+
             // Google Sheet ထံသို့ ဖျက်ရန် တောင်းဆိုခြင်း
             fetch(google_script_url, {
                 method: "POST",
@@ -125,6 +136,10 @@ function deleteItem(id) {
                     render();
                     alert("🧹 စာရင်းကို ဖျက်ပြီးပါပြီ။");
                 }
+            })
+            .catch(error => {
+                alert("ဖျက်ရတာ အဆင်မပြေပါ။");
+                render();
             });
         }
     } else {
