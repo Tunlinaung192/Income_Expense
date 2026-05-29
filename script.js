@@ -5,26 +5,32 @@ let transactions = localStorage.getItem('offline_transactions') ? JSON.parse(loc
 let unsynced_items = localStorage.getItem('unsynced_items') ? JSON.parse(localStorage.getItem('unsynced_items')) : [];
 
 window.onload = function() {
-    render(); // ဖွင့်ဖွင့်ချင်း ဖုန်းထဲရှိပြီးသား စာရင်းတွေကို တန်းပြမယ် (Offline သုံးလို့ရအောင်)
+    render(); // ဖွင့်ဖွင့်ချင်း ဖုန်းထဲရှိပြီးသား စာရင်းတွေကို တန်းပြမယ်
     fetchDataFromGoogleSheets(); // ပြီးမှ လိုင်းရှိရင် နောက်ဆုံး Data လှမ်းဆွဲမယ်
     
-    // အင်တာနက်လိုင်း ပြန်ပွင့်လာရင် စာရင်းဟောင်းတွေကို Google Sheet ထဲ auto ပို့ခိုင်းဖို့ စောင့်ကြည့်ခြင်း
     window.addEventListener('online', syncOfflineDataToGoogle);
     if (navigator.onLine) {
         syncOfflineDataToGoogle();
     }
 };
 
-// Google Sheet ဆီကနေ နောက်ဆုံး Data တွေ လှမ်းယူခြင်း
+// မြန်မာဂဏန်းများကို အင်္ဂလိပ်ဂဏန်းသို့ ပြောင်းပေးသည့် Function
+function convertBurmeseToEnglish(input) {
+    const burmeseNumbers = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
+    let output = input.toString();
+    for (let i = 0; i < 10; i++) {
+        output = output.replace(new RegExp(burmeseNumbers[i], 'g'), i);
+    }
+    return output;
+}
+
 function fetchDataFromGoogleSheets() {
-    if (!navigator.onLine) return; // အင်တာနက် မရှိရင် ကျော်သွားမယ်
+    if (!navigator.onLine) return;
 
     fetch(google_script_url)
         .then(response => response.json())
         .then(data => {
-            // လိုင်းပေါ်က Data နဲ့ ဖုန်းထဲက ဒေတာကို ပေါင်းစပ်ပြီး အသစ်လဲခြင်း
             transactions = data;
-            // မပို့ရသေးတဲ့ Offline data တွေရှိရင် အပေါ်ကနေ ထပ်ပေါင်းပြထားမယ်
             unsynced_items.forEach(item => {
                 if (!transactions.some(t => t.id === item.id)) {
                     transactions.push(item);
@@ -36,7 +42,6 @@ function fetchDataFromGoogleSheets() {
         .catch(error => console.log("Google Sheets ဆွဲမရသော်လည်း ဖုန်းထဲကစာရင်းနှင့် ဆက်သုံးနိုင်ပါသည်"));
 }
 
-// စာရင်းအသစ်ထည့်ခြင်း လုပ်ဆောင်ချက်
 function addTransaction(type) {
     const amountInput = document.getElementById('amount');
     const descInput = document.getElementById('description');
@@ -46,18 +51,29 @@ function addTransaction(type) {
         return;
     }
 
+    // မြန်မာလို ရိုက်ထားခဲ့ရင် အင်္ဂလိပ်ဂဏန်း ပြောင်းပစ်မယ်
+    let cleanAmount = convertBurmeseToEnglish(amountInput.value);
+    
+    // ကော်မာ (,) တွေ သို့မဟုတ် ဟာကွက်တွေ ပါလာရင် ဖယ်ထုတ်ပစ်မယ်
+    cleanAmount = cleanAmount.replace(/,/g, '').trim();
+    
+    const parsedAmount = parseFloat(cleanAmount);
+
+    if (isNaN(parsedAmount)) {
+        alert("❌ ကျေးဇူးပြု၍ ဂဏန်း မှန်ကန်စွာ ရိုက်ထည့်ပေးပါ။");
+        return;
+    }
+
     const new_item = {
         id: Date.now().toString(),
         type: type,
-        amount: parseFloat(amountInput.value),
+        amount: parsedAmount,
         description: descInput.value
     };
 
-    // ၁။ ဖုန်းထဲမှာ အရင်ချက်ချင်းသိမ်းပြီး ချက်ချင်းပြမယ် (လိုင်းမလိုပါ)
     transactions.push(new_item);
     localStorage.setItem('offline_transactions', JSON.stringify(transactions));
     
-    // မပို့ရသေးတဲ့ စာရင်းထဲ ထည့်ထားမယ်
     unsynced_items.push(new_item);
     localStorage.setItem('unsynced_items', JSON.stringify(unsynced_items));
     
@@ -66,16 +82,13 @@ function addTransaction(type) {
     amountInput.value = '';
     descInput.value = '';
 
-    // ၂။ အင်တာနက်ရှိရင် Google Sheet ထဲကို တန်းပို့မယ်၊ မရှိရင် Offline အဖြစ် ဆက်ရှိနေမယ်
     if (navigator.onLine) {
         syncOfflineDataToGoogle();
     }
 }
-// Offline သွင်းထားသမျှကို Google Sheet ထဲ အလိုအလျောက် ပို့ပေးမည့် စနစ်
 function syncOfflineDataToGoogle() {
     if (!navigator.onLine || unsynced_items.length === 0) return;
 
-    // တစ်ခုချင်းစီကို Google Sheet ထဲ လှမ်းပို့ခြင်း
     const item_to_sync = unsynced_items[0];
     const payload = {
         action: "add",
@@ -92,18 +105,14 @@ function syncOfflineDataToGoogle() {
     .then(res => res.json())
     .then(response => {
         if (response.status === "success") {
-            // ပို့အောင်မြင်ရင် မပို့ရသေးတဲ့စာရင်းထဲက ဖယ်ထုတ်မယ်
             unsynced_items = unsynced_items.filter(item => item.id !== item_to_sync.id);
             localStorage.setItem('unsynced_items', JSON.stringify(unsynced_items));
-            
-            // ကျန်တာတွေရှိရင် ဆက်ပို့ဖို့ loop ပုံစံ ပြန်ခေါ်မယ်
             syncOfflineDataToGoogle();
         }
     })
     .catch(err => console.log("လိုင်းမတည်ငြိမ်သေးသဖြင့် ခေတ္တစောင့်ဆိုင်းနေပါသည်"));
 }
 
-// မျက်နှာပြင်ပေါ်တွင် စာရင်းများ ပြသခြင်း
 function render() {
     const list = document.getElementById('transaction-list');
     list.innerHTML = '';
@@ -119,7 +128,6 @@ function render() {
         const li = document.createElement('li');
         li.classList.add(t.type === 'ဝင်ငွေ' ? 'inc' : 'exp');
         
-        // Google Sheet ဆီ မရောက်သေးတဲ့ Offline data တွေကို သိသာအောင် ☁️ (မိုးတိမ်ပုံစံ) လေး ပြထားပါမယ်
         const is_unsynced = unsynced_items.some(item => item.id === t.id);
         const sync_icon = is_unsynced ? " ☁️ (Offline)" : "";
 
@@ -141,7 +149,6 @@ function render() {
     document.getElementById('net-balance').innerText = (totalIncome - totalExpense).toLocaleString();
 }
 
-// စာရင်းဖျက်ခြင်း လုပ်ဆောင်ချက်
 function deleteItem(id) {
     const savedDeletePassword = localStorage.getItem('delete_password');
 
@@ -163,17 +170,14 @@ function deleteItem(id) {
     if (inputPassword === savedDeletePassword) {
         if (confirm("⚠️ ဤမှတ်တမ်းကို အပြီးဖျက်ပစ်ရန် သေချာပါသလား?")) {
             
-            // ဖုန်းထဲကနေ ချက်ချင်း အရင်ဖျက်မယ်
             transactions = transactions.filter(t => t.id !== id);
             localStorage.setItem('offline_transactions', JSON.stringify(transactions));
             
-            // မပို့ရသေးတဲ့ စာရင်းထဲမှာ ရှိနေရင်လည်း ဖျက်မယ်
             unsynced_items = unsynced_items.filter(item => item.id !== id);
             localStorage.setItem('unsynced_items', JSON.stringify(unsynced_items));
             
             render();
 
-            // လိုင်းရှိရင် Google Sheet ထဲကပါ လှမ်းဖျက်မယ်
             if (navigator.onLine) {
                 fetch(google_script_url, {
                     method: "POST",
