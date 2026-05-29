@@ -1,6 +1,29 @@
-let transactions = localStorage.getItem('transactions') ? JSON.parse(localStorage.getItem('transactions')) : [];
+// ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
+const google_script_url = "https://script.google.com/macros/s/AKfycbxpy275b7G2RpA-f0GC7DpNSA0u2z67pxmhcADCZok5rp9B8rZak3cxNx9VehYyM6-F/exec";
 
-// ဝင်ငွေထွက်ငွေ ထည့်သည့် လုပ်ဆောင်ချက်
+let transactions = [];
+
+// App စဖွင့်တာနဲ့ Google Sheet ထဲက Data တွေကို လှမ်းယူမယ်
+window.onload = function() {
+    fetchDataFromGoogleSheets();
+};
+
+function fetchDataFromGoogleSheets() {
+    const list = document.getElementById('transaction-list');
+    list.innerHTML = '<li>⌛ Google Sheet ထဲက စာရင်းများဆွဲနေသည်...</li>';
+    
+    fetch(google_script_url)
+        .then(response => response.json())
+        .then(data => {
+            transactions = data;
+            render();
+        })
+        .catch(error => {
+            alert("Google Sheet နှင့် ချိတ်ဆက်ရ အဆင်မပြေပါ။");
+            console.error(error);
+        });
+}
+
 function addTransaction(type) {
     const amountInput = document.getElementById('amount');
     const descInput = document.getElementById('description');
@@ -11,22 +34,29 @@ function addTransaction(type) {
     }
 
     const transaction = {
-        id: Date.now(), // အိုင်ဒီကို အချိန်နဲ့ပေးထားလို့ တစ်ခုစီ ခွဲခြားလို့ရပါတယ်
+        action: "add",
+        id: Date.now().toString(),
         type: type,
         amount: parseFloat(amountInput.value),
         description: descInput.value
     };
 
-    transactions.push(transaction);
-    updateLocalStorage();
-    render();
-    
-    amountInput.value = '';
-    descInput.value = '';
-}
-
-function updateLocalStorage() {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
+    // Google Sheet ထံသို့ Data ပို့ခြင်း
+    fetch(google_script_url, {
+        method: "POST",
+        body: JSON.stringify(transaction)
+    })
+    .then(res => res.json())
+    .then(response => {
+        if(response.status === "success") {
+            // Sheet ထဲဝင်သွားမှ ဖုန်းထဲမှာ ပြပေးမယ်
+            delete transaction.action;
+            transactions.push(transaction);
+            render();
+            amountInput.value = '';
+            descInput.value = '';
+        }
+    });
 }
 
 function render() {
@@ -36,22 +66,25 @@ function render() {
     let totalIncome = 0;
     let totalExpense = 0;
 
+    if(transactions.length === 0) {
+        list.innerHTML = '<li>📭 မှတ်တမ်းမရှိသေးပါ။</li>';
+    }
+
     transactions.forEach(t => {
         const li = document.createElement('li');
         li.classList.add(t.type === 'ဝင်ငွေ' ? 'inc' : 'exp');
         
-        // စာရင်းတစ်ခုချင်းစီရဲ့ ဘေးမှာ ❌ (ဖျက်ရန်) ခလုတ်လေး ထည့်ပေးထားပါတယ်
         li.innerHTML = `
             <span>${t.description}</span> 
             <div>
-                <b>${t.type === 'ဝင်ငွေ' ? '+' : '-'}${t.amount.toLocaleString()} ကျပ်</b>
-                <button onclick="deleteItem(${t.id})" style="background: none; color: #e74c3c; border: none; font-size: 16px; margin-left: 10px; padding: 0; cursor: pointer; flex: none; display: inline;">❌</button>
+                <b>${t.type === 'ဝင်ငွေ' ? '+' : '-'}${Number(t.amount).toLocaleString()} ကျပ်</b>
+                <button onclick="deleteItem('${t.id}')" style="background: none; color: #e74c3c; border: none; font-size: 16px; margin-left: 10px; padding: 0; cursor: pointer; display: inline;">❌</button>
             </div>
         `;
         list.appendChild(li);
 
-        if (t.type === 'ဝင်ငွေ') totalIncome += t.amount;
-        else totalExpense += t.amount;
+        if (t.type === 'ဝင်ငွေ') totalIncome += Number(t.amount);
+        else totalExpense += Number(t.amount;
     });
 
     document.getElementById('total-income').innerText = totalIncome.toLocaleString();
@@ -59,13 +92,11 @@ function render() {
     document.getElementById('net-balance').innerText = (totalIncome - totalExpense).toLocaleString();
 }
 
-// 🔐 စကားဝှက်စစ်ဆေးပြီးမှ ရွေးချယ်ထားသော စာရင်းတစ်ခုကို ဖျက်မည့်စနစ်
 function deleteItem(id) {
     const savedDeletePassword = localStorage.getItem('delete_password');
 
-    // ပထမဆုံးအကြိမ်ဆိုရင် Password အသစ် အရင်ပေးခိုင်းမယ်
     if (!savedDeletePassword) {
-        const newPassword = prompt("🔑 စာရင်းဖျက်ရန်အတွက် စကားဝှက်အသစ်တစ်ခု သတ်မှတ်ပေးပါ (ကျန်တဲ့သူ မသိစေချင်တဲ့ ကုဒ် ရိုက်ပါ):");
+        const newPassword = prompt("🔑 စာရင်းဖျက်ရန်အတွက် စကားဝှက်အသစ်တစ်ခု သတ်မှတ်ပေးပါ:");
         if (newPassword === null) return;
         if (newPassword.trim() === "") {
             alert("❌ စကားဝှက် အလွတ်မဖြစ်ရပါ။");
@@ -76,22 +107,27 @@ function deleteItem(id) {
         return;
     }
 
-    // နောက်ခေါက်တွေမှာ သတ်မှတ်ထားတဲ့ Password တောင်းမယ်
     const inputPassword = prompt("🔐 ဤစာရင်းကို ဖျက်ရန် စကားဝှက် ရိုက်ထည့်ပါ:");
     if (inputPassword === null) return; 
 
     if (inputPassword === savedDeletePassword) {
-        if(confirm("⚠️ ဤမှတ်တမ်းကို ဖျက်ပစ်ရန် သေချာပါသလား?")) {
-            // ရွေးလိုက်တဲ့ အိုင်ဒီကလွဲပြီး ကျန်တဲ့စာရင်းတွေကိုပဲ ချန်ထားခဲ့တာပါ
-            transactions = transactions.filter(t => t.id !== id);
-            updateLocalStorage();
-            render();
-            alert("🧹 စာရင်းကို ဖျက်ပြီးပါပြီ။");
+        if(confirm("⚠️ ဤမှတ်တမ်းကို Google Sheet ထဲမှပါ အပြီးဖျက်ပစ်ရန် သေချာပါသလား?")) {
+            
+            // Google Sheet ထံသို့ ဖျက်ရန် တောင်းဆိုခြင်း
+            fetch(google_script_url, {
+                method: "POST",
+                body: JSON.stringify({ action: "delete", id: id })
+            })
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === "success") {
+                    transactions = transactions.filter(t => t.id !== id);
+                    render();
+                    alert("🧹 စာရင်းကို ဖျက်ပြီးပါပြီ။");
+                }
+            });
         }
     } else {
         alert("❌ စကားဝှက် မှားယွင်းနေပါသည်။ ဖျက်ခွင့်မရှိပါ။");
     }
 }
-
-// ပရိုဂရမ်စဖွင့်ချင်း data ဆွဲတင်ရန်
-render();
