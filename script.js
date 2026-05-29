@@ -5,8 +5,8 @@ let transactions = localStorage.getItem('offline_transactions') ? JSON.parse(loc
 let unsynced_items = localStorage.getItem('unsynced_items') ? JSON.parse(localStorage.getItem('unsynced_items')) : [];
 
 window.onload = function() {
-    render(); // ဖွင့်ဖွင့်ချင်း ဖုန်းထဲရှိပြီးသား စာရင်းတွေကို တန်းပြမယ်
-    fetchDataFromGoogleSheets(); // ပြီးမှ လိုင်းရှိရင် နောက်ဆုံး Data လှမ်းဆွဲမယ်
+    render(); 
+    fetchDataFromGoogleSheets(); 
     
     window.addEventListener('online', syncOfflineDataToGoogle);
     if (navigator.onLine) {
@@ -60,7 +60,7 @@ function addTransaction(type) {
         return;
     }
 
-    // 📅 လက်ရှိ နေ့စွဲနှင့် အချိန်ကို စက်ထဲကနေ Auto ယူခြင်း
+    // 📅 နေ့စွဲကို YYYY-MM-DD ပုံစံ အတိအကျယူခြင်း
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -68,7 +68,7 @@ function addTransaction(type) {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     
-    const formattedDate = `${year}-${month}-${date}`; // ရှာရလွယ်အောင် သိမ်းမယ့် ပုံစံ (YYYY-MM-DD)
+    const formattedDate = `${year}-${month}-${date}`; 
     const formattedTime = `${hours}:${minutes}`;
 
     const new_item = {
@@ -76,8 +76,8 @@ function addTransaction(type) {
         type: type,
         amount: parsedAmount,
         description: descInput.value,
-        date: formattedDate, // ရက်စွဲအသစ် ထည့်သွင်းမှတ်သားခြင်း
-        time: formattedTime  // အချိန်အသစ် ထည့်သွင်းမှတ်သားခြင်း
+        date: formattedDate, 
+        time: formattedTime  
     };
 
     transactions.push(new_item);
@@ -95,7 +95,6 @@ function addTransaction(type) {
         syncOfflineDataToGoogle();
     }
 }
-// Offline သွင်းထားသမျှကို Google Sheet ထဲ အလိုအလျောက် ပို့ပေးမည့် စနစ်
 function syncOfflineDataToGoogle() {
     if (!navigator.onLine || unsynced_items.length === 0) return;
 
@@ -125,7 +124,40 @@ function syncOfflineDataToGoogle() {
     .catch(err => console.log("လိုင်းမတည်ငြိမ်သေးသဖြင့် ခေတ္တစောင့်ဆိုင်းနေပါသည်"));
 }
 
-// မျက်နှာပြင်ပေါ်တွင် စာရင်းများ ပြသခြင်း
+// 📅 စာသားရှည်ကြီးတွေထဲကနေ YYYY-MM-DD ပုံစံ စစ်ထုတ်ပေးမည့် လုပ်ဆောင်ချက်
+function cleanDate(dateStr) {
+    if (!dateStr) return "ရက်စွဲမရှိ";
+    let s = dateStr.toString().trim();
+    
+    // အကယ်၍ Format က Fri May 29 2026 ပုံစံ ဖြစ်နေရင်
+    if (s.length > 10 && (s.includes("GMT") || s.includes("00:00:00"))) {
+        try {
+            const d = new Date(s);
+            if (!isNaN(d.getTime())) {
+                let y = d.getFullYear();
+                let m = String(d.getMonth() + 1).padStart(2, '0');
+                let date = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${date}`;
+            }
+        } catch(e){}
+    }
+    // အကယ်၍ T ပါတဲ့ Standard format ဆိုရင် ဖြတ်ယူမယ်
+    if (s.includes("T")) return s.split("T")[0];
+    return s;
+}
+
+// 🕒 အချိန်ထဲက နှစ်ဟောင်းစာသားတွေကို သန့်စင်ပေးမည့် လုပ်ဆောင်ချက်
+function cleanTime(timeStr) {
+    if (!timeStr) return "";
+    let s = timeStr.toString().trim();
+    if (s.includes("GMT") && s.includes(":")) {
+        // စာသားထဲက နာရီနဲ့ မိနစ် (ဥပမာ- 15:31) ကိုပဲ ဖြတ်ယူခြင်း
+        let match = s.match(/\d{2}:\d{2}/);
+        if (match) return match[0];
+    }
+    return s;
+}
+
 function render() {
     const list = document.getElementById('transaction-list');
     list.innerHTML = '';
@@ -135,8 +167,9 @@ function render() {
 
     const filterDate = document.getElementById('filter-date').value; 
 
+    // ပြက္ခဒိန်နှင့် တိုက်စစ်ရန်အတွက် transactions တစ်ခုချင်းစီရဲ့ ရက်စွဲကို clean အရင်လုပ်ပြီးမှ filter စစ်ထုတ်မယ်
     const displayedTransactions = filterDate 
-        ? transactions.filter(t => t.date && t.date.includes(filterDate)) 
+        ? transactions.filter(t => cleanDate(t.date) === filterDate) 
         : transactions;
 
     if (displayedTransactions.length === 0) {
@@ -150,21 +183,9 @@ function render() {
         const is_unsynced = unsynced_items.some(item => item.id === t.id);
         const sync_icon = is_unsynced ? " ☁️ (Offline)" : "";
 
-        // 📅 Google Sheet က ပြန်လာတဲ့ ရက်စွဲ format ကို သန့်စင်ခြင်း
-        let displayDate = t.date ? t.date : "ရက်စွဲမရှိ";
-        if (displayDate.includes("T")) { 
-            displayDate = displayDate.split("T")[0]; // အကယ်၍ Standard Date ဖြစ်နေရင် ဖြတ်ယူမယ်
-        } else if (displayDate.length > 10 && displayDate.includes(" ")) {
-            // Google က စာသားရှည်ကြီး ပြန်ပေးလာရင် YYYY-MM-DD ပြောင်းလဲယူမည့်အပိုင်း
-            try {
-                const d = new Date(displayDate);
-                if(!isNaN(d.getTime())) {
-                    displayDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-                }
-            } catch(e){}
-        }
-        
-        const displayTime = t.time ? t.time : "";
+        // ဒေတာတွေကို သန့်စင်ပြီးမှ မျက်နှာပြင်ပေါ် ပြသမယ်
+        const displayDate = cleanDate(t.date);
+        const displayTime = cleanTime(t.time);
 
         li.innerHTML = `
             <div>
