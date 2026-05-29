@@ -39,5 +39,12 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Offline system active!'))
+            .catch(err => console.log('Offline active failed', err));
+        }
+    </script>
 </body>
 </html>
