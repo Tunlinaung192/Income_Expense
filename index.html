@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ဝင်ငွေ/ထွက်ငွေ စာရင်း</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>📊 ဝင်ငွေ/ထွက်ငွေ စာရင်း</h2>
+        
+        <div class="balance-board">
+            <div class="card income">
+                <h3>ဝင်ငွေ</h3>
+                <p id="total-income">0.00</p>
+            </div>
+            <div class="card expense">
+                <h3>ထွက်ငွေ</h3>
+                <p id="total-expense">0.00</p>
+            </div>
+            <div class="card balance">
+                <h3>လက်ကျန်</h3>
+                <p id="net-balance">0.00</p>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <input type="number" id="amount" placeholder="ပမာဏ (ကျပ်)">
+            <input type="text" id="description" placeholder="အကြောင်းအရာ (ဥပမာ- လစာ၊ စားစရိတ်)">
+            <div class="btn-group">
+                <button onclick="addTransaction('ဝင်ငွေ')" class="btn-inc">➕ ဝင်ငွေထည့်</button>
+                <button onclick="addTransaction('ထွက်ငွေ')" class="btn-exp">➖ ထွက်ငွေထည့်</button>
+            </div>
+        </div>
+
+        <h3>📜 မှတ်တမ်းများ</h3>
+        <ul id="transaction-list"></ul>
+        <button onclick="clearAll()" class="btn-clear">🧹 စာရင်းအားလုံးဖျက်မည်</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
