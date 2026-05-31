@@ -11,14 +11,8 @@
         
         <div id="login-section" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; margin-bottom: 20px;">
             <h3 style="margin-top:0; color: #34495e;">📱 ဖုန်းနံပါတ်ဖြင့် အကောင့်ဝင်ရန်</h3>
-            <input type="tel" id="user-phone" placeholder="ဖုန်းနံပါတ် ရိုက်ထည့်ပါ (ဥပမာ- 09123456)" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; text-align: center;">
-            
-            <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">အသုံးပြုမည့် အကောင့်ရွေးချယ်ပါ-</label>
-            <select id="user-acc-type" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; font-weight: bold; text-align: center;">
-                <option value="Acc1">👤 Account 1</option>
-                <option value="Acc2">👥 Account 2</option>
-            </select>
-            <button onclick="loginUser()" style="background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 14px; font-weight: bold; width: 100%; cursor: pointer;">🔐 အကောင့်အတည်ပြုမည်</button>
+            <input type="tel" id="user-phone" placeholder="ဖုန်းနံပါတ် ရိုက်ထည့်ပါ (ဥပမာ- 09123456)" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; text-align: center;">
+            <button onclick="loginUser()" id="login-btn" style="background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 14px; font-weight: bold; width: 100%; cursor: pointer;">🔐 အကောင့်အတည်ပြုမည်</button>
         </div>
 
         <div id="main-app" style="display: none;">
