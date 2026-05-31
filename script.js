@@ -48,7 +48,7 @@ function checkLoginStatus() {
         document.getElementById('admin-panel').style.display = "none";
     }
 }
-// အကောင့်ဝင်ရန် လုပ်ဆောင်ချက်
+// အကောင့်ဝင်ရန် လုပ်ဆောင်ချက် (စစ်ဆေးနေပါသည် ခလုတ်အား အရောင်ပြောင်းလဲခြင်းစနစ်ပါဝင်သည်)
 function loginUser() {
     let phoneInput = document.getElementById('user-phone').value.trim();
     let passInput = document.getElementById('user-password').value.trim();
@@ -63,7 +63,10 @@ function loginUser() {
     }
     if (!navigator.onLine) { alert("🌐 အကောင့်ဝင်ရောက်ရန် အင်တာနက် လိုအပ်ပါသည်!"); return; }
     
-    loginBtn.innerText = "⏳ စစ်ဆေးနေပါသည်..."; loginBtn.disabled = true;
+    // ✨ [စတင်စစ်ဆေးချိန်] - စာသားပြောင်းပြီး ခလုတ်ကိုပါ အရောင်လှလှလေး ပြောင်းလဲလိုက်ခြင်း
+    loginBtn.innerText = "⏳ စစ်ဆေးနေပါသည်..."; 
+    loginBtn.disabled = true;
+    loginBtn.classList.add("btn-loading"); // CSS က အရောင်အသစ်လှလှလေးကို လှမ်းယူသုံးခြင်း
 
     fetch(google_script_url, {
         method: "POST",
@@ -71,7 +74,10 @@ function loginUser() {
     })
     .then(res => res.json())
     .then(response => {
-        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; loginBtn.disabled = false;
+        // ✨ [စစ်ဆေးပြီးချိန်] - ခလုတ်ကို မူလအခြေအနေအတိုင်း ပြန်ပြောင်းခြင်း
+        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; 
+        loginBtn.disabled = false;
+        loginBtn.classList.remove("btn-loading"); // အရောင်ဟောင်း ပြန်ပြောင်းခြင်း
         
         if (response.status === "approved") {
             localStorage.setItem('logged_phone', phoneInput);
@@ -86,7 +92,10 @@ function loginUser() {
         } else { alert(response.message); }
     })
     .catch(err => {
-        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; loginBtn.disabled = false;
+        // ✨ [အမှားအယွင်းတက်ချိန်] - ခလုတ်ကို မူလအခြေအနေအတိုင်း ပြန်ပြောင်းခြင်း
+        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; 
+        loginBtn.disabled = false;
+        loginBtn.classList.remove("btn-loading");
         alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
     });
 }
