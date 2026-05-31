@@ -1,5 +1,5 @@
 // ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
-const google_script_url = "https://script.google.com/macros/s/AKfycbzEzRmewtz3q93A6GkaHTk9xgsRtGwW1PUkP3Fpp7MwoOp1f0S0qjrinyw31djjWUDr/exec";
+const google_script_url = "သင်ရလာတဲ့_Google_Web_App_URL_ကို_ဒီမှာထည့်ပါ";
 
 let current_phone = localStorage.getItem('logged_phone') ? localStorage.getItem('logged_phone') : "";
 let current_acc_type = localStorage.getItem('logged_acc_type') ? localStorage.getItem('logged_acc_type') : "";
@@ -7,18 +7,28 @@ let current_acc_type = localStorage.getItem('logged_acc_type') ? localStorage.ge
 let transactions = [];
 let unsynced_items = [];
 
+// App စတင်ပွင့်လာချိန်တွင် အလုပ်လုပ်မည့်နေရာ
 window.onload = function() {
     checkLoginStatus();
     toggleBankNameInput(); 
 };
 
+// မြန်မာဂဏန်းကို အင်္ဂလိပ်ဂဏန်းသို့ ပြောင်းပေးသည့် ဖန်ရှင်
+function convertMyanmarToEnglishDigits(input) {
+    const myanmarDigits = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
+    return input.toString().replace(/[၀-၉]/g, function(ch) {
+        return myanmarDigits.indexOf(ch);
+    });
+}
+
+// အသုံးပြုသူ၏ အကောင့်ဝင်မှုအခြေအနေအလိုက် ပိတ်/ဖွင့် စစ်ဆေးခြင်း
 function checkLoginStatus() {
     if (current_phone && current_acc_type) {
         document.getElementById('login-section').style.display = "none";
         document.getElementById('main-app').style.display = "block";
         document.getElementById('active-user-display').innerText = `📱 ${current_phone} (${current_acc_type})`;
 
-        // ✨ Admin ဖြစ်ပါက User တိုးသည့် ဘောင်ကိုပါ တွဲဖွင့်ပေးမည်
+        // Admin ဖြစ်ပါက User တိုးသည့် ဘောင်ကိုပါ တွဲဖွင့်ပေးမည်
         if (current_acc_type === "Admin") {
             document.getElementById('admin-panel').style.display = "block";
         } else {
@@ -38,10 +48,15 @@ function checkLoginStatus() {
         document.getElementById('admin-panel').style.display = "none";
     }
 }
+// အကောင့်ဝင်ရန် လုပ်ဆောင်ချက်
 function loginUser() {
-    const phoneInput = document.getElementById('user-phone').value.trim();
-    const passInput = document.getElementById('user-password').value.trim();
+    let phoneInput = document.getElementById('user-phone').value.trim();
+    let passInput = document.getElementById('user-password').value.trim();
     const loginBtn = document.getElementById('login-btn');
+    
+    // မြန်မာဂဏန်း ရိုက်ခဲ့လျှင် အင်္ဂလိပ်ဂဏန်းသို့ အော်တိုပြောင်းခြင်း
+    phoneInput = convertMyanmarToEnglishDigits(phoneInput);
+    passInput = convertMyanmarToEnglishDigits(passInput);
     
     if (!phoneInput || !passInput) {
         alert("❌ ကျေးဇူးပြု၍ ဖုန်းနံပါတ်နှင့် ဝင်ခွင့်ကုဒ် နှစ်ခုလုံး ဖြည့်သွင်းပါ!"); return;
@@ -72,10 +87,11 @@ function loginUser() {
     })
     .catch(err => {
         loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; loginBtn.disabled = false;
-        alert("❌ ချิตဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
+        alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
     });
 }
 
+// အကောင့်မှ ထွက်ရန် (Logout)
 function logoutUser() {
     if (navigator.onLine && current_phone) {
         fetch(google_script_url, {
@@ -89,9 +105,14 @@ function logoutUser() {
     checkLoginStatus();
 }
 
+// Admin က အသုံးပြုသူ User အသစ် တိုးပေးရန်
 function adminRegisterUser() {
-    const rPhone = document.getElementById('reg-phone').value.trim();
-    const rPass = document.getElementById('reg-password').value.trim();
+    let rPhone = document.getElementById('reg-phone').value.trim();
+    let rPass = document.getElementById('reg-password').value.trim();
+    
+    // မြန်မာဂဏန်း ရိုက်ခဲ့လျှင်လည်း အင်္ဂလိပ်ဂဏန်းသို့ အော်တိုပြောင်းခြင်း
+    rPhone = convertMyanmarToEnglishDigits(rPhone);
+    rPass = convertMyanmarToEnglishDigits(rPass);
     
     if (!rPhone || !rPass) { alert("❌ ဖုန်းနံပါတ်နှင့် Password ဖြည့်ပါ!"); return; }
     if (!navigator.onLine) { alert("🌐 အင်တာနက် ချိတ်ဆက်ထားရန် လိုအပ်သည်!"); return; }
@@ -110,11 +131,15 @@ function adminRegisterUser() {
     })
     .catch(err => alert("❌ အကောင့်တိုး၍ မရသေးပါ။ ပြန်ကြိုးစားကြည့်ပါ။"));
 }
+// စာရင်းအသစ်ထည့်သွင်းရန် လုပ်ဆောင်ချက်
 function addTransaction(type) {
-    const amountInput = document.getElementById('amount').value.trim();
+    let amountInput = document.getElementById('amount').value.trim();
     const descInput = document.getElementById('description').value.trim();
     const methodInput = document.getElementById('method').value;
     
+    // ပမာဏကိုလည်း မြန်မာဂဏန်းရိုက်ခဲ့လျှင် အင်္ဂလိပ်ပြောင်းပေးရန်
+    amountInput = convertMyanmarToEnglishDigits(amountInput);
+
     let bankNameInput = "Cash";
     if (methodInput === "Banking") {
         const bankSelect = document.getElementById('bank-select').value;
@@ -150,6 +175,7 @@ function addTransaction(type) {
     }
 }
 
+// Google Sheet သို့ ဒေတာပို့ရန်
 function sendDataToGoogle(item) {
     fetch(google_script_url, {
         method: "POST",
@@ -157,6 +183,7 @@ function sendDataToGoogle(item) {
     }).catch(err => { unsynced_items.push(item); saveToLocal(); });
 }
 
+// စာရင်းမှတ်တမ်းဖျက်ရန်
 function deleteTransaction(id) {
     if (!confirm("⚠️ ဤစာရင်းအား ဖြတ်ပစ်ရန် သေချာပါသလား?")) return;
     transactions = transactions.filter(t => t.id.toString() !== id.toString());
@@ -169,10 +196,9 @@ function deleteTransaction(id) {
         });
     }
 }
-
+// Google Sheet ဆီမှ စာရင်းဟောင်းများအားလုံးကို ဆွဲယူဖတ်ရှုရန်
 function fetchDataFromGoogleSheets() {
     if (!navigator.onLine) return;
-    // Admin ဖတ်လျှင် အကောင့်အမျိုးအစားကိုပါ လှမ်းပို့၍ အော်တိုဖတ်မည်
     fetch(`${google_script_url}?phoneNumber=${current_phone}&accType=${current_acc_type}`)
     .then(res => res.json())
     .then(data => {
@@ -180,17 +206,19 @@ function fetchDataFromGoogleSheets() {
     });
 }
 
+// အင်တာနက်ပြန်ရချိန်တွင် Offline စာရင်းများကို Auto လှမ်းပို့ရန်
 function syncOfflineDataToGoogle() {
     if (unsynced_items.length === 0) return;
     let itemsToSync = [...unsynced_items]; unsynced_items = []; saveToLocal();
     itemsToSync.forEach(item => { sendDataToGoogle(item); });
 }
 
+// ဖုန်းမှတ်ဉာဏ်ထဲ (Local Storage) သိမ်းဆည်းသည့် ဖန်ရှင်
 function saveToLocal() {
     localStorage.setItem(`off_tx_${current_phone}_${current_acc_type}`, JSON.stringify(transactions));
     localStorage.setItem(`un_syn_${current_phone}_${current_acc_type}`, JSON.stringify(unsynced_items));
 }
-
+// စာရင်းဇယားများကို တွက်ချက်ပြီး မျက်နှာပြင်ပေါ်တွင် ပြသရန်
 function render() {
     const list = document.getElementById('transaction-list');
     const filterDate = document.getElementById('filter-date').value;
@@ -249,6 +277,7 @@ function render() {
     } else { filterDiv.style.display = "none"; }
 }
 
+// Filter ရှင်းလင်းရန်
 function clearFilter() {
     document.getElementById('filter-date').value = "";
     document.getElementById('filter-bank').value = "All";
@@ -256,6 +285,7 @@ function clearFilter() {
     render();
 }
 
+// Banking သို့မဟုတ် Cash အလိုက် ရွေးချယ်မှုအကွက် ပြောင်းလဲရန်
 function toggleBankNameInput() {
     const method = document.getElementById('method').value;
     const bankSelect = document.getElementById('bank-select');
@@ -264,6 +294,7 @@ function toggleBankNameInput() {
     } else { bankSelect.style.display = "block"; toggleCustomBankInput(); }
 }
 
+// "အခြားဘဏ်" ရွေးချယ်မှု စစ်ဆေးရန်
 function toggleCustomBankInput() {
     const bankSelect = document.getElementById('bank-select').value;
     document.getElementById('custom-bank-name').style.display = (bankSelect === "Other") ? "block" : "none";
