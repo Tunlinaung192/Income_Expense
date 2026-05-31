@@ -5,7 +5,7 @@ let transactions = localStorage.getItem('offline_transactions') ? JSON.parse(loc
 let unsynced_items = localStorage.getItem('unsynced_items') ? JSON.parse(localStorage.getItem('unsynced_items')) : [];
 
 window.onload = function() {
-    toggleBankNameInput(); // စဖွင့်ချင်း ဘဏ်နာမည်ရိုက်ကွက် ပြ/ဝှက် စစ်မယ်
+    toggleBankNameInput(); 
     render(); 
     fetchDataFromGoogleSheets(); 
     
@@ -15,15 +15,26 @@ window.onload = function() {
     }
 };
 
-// Banking သို့မဟုတ် Cash အလိုက် ဘဏ်နာမည်ရိုက်ကွက်ကို ပြ/ဝှက် လုပ်ပေးသည့် Function
 function toggleBankNameInput() {
     const method = document.getElementById('method').value;
-    const bankNameInput = document.getElementById('bank-name');
+    const bankSelect = document.getElementById('bank-select');
     if (method === "Banking") {
-        bankNameInput.style.display = "block";
+        bankSelect.style.display = "block";
+        toggleCustomBankInput();
     } else {
-        bankNameInput.style.display = "none";
-        bankNameInput.value = ""; // Cash ဖြစ်သွားရင် ဘဏ်နာမည်ကို ဖျက်ပစ်မယ်
+        bankSelect.style.display = "none";
+        document.getElementById('custom-bank-name').style.display = "none";
+    }
+}
+
+function toggleCustomBankInput() {
+    const bankSelect = document.getElementById('bank-select').value;
+    const customBankInput = document.getElementById('custom-bank-name');
+    if (bankSelect === "Other") {
+        customBankInput.style.display = "block";
+    } else {
+        customBankInput.style.display = "none";
+        customBankInput.value = ""; 
     }
 }
 
@@ -58,16 +69,27 @@ function addTransaction(type) {
     const amountInput = document.getElementById('amount');
     const descInput = document.getElementById('description');
     const methodInput = document.getElementById('method');
-    const bankNameInput = document.getElementById('bank-name');
+    const bankSelect = document.getElementById('bank-select');
+    const customBankInput = document.getElementById('custom-bank-name');
     
     if (!amountInput.value || !descInput.value) {
         alert("📊 ပမာဏနှင့် အကြောင်းအရာကို ပြည့်စုံစွာဖြည့်ပါ။");
         return;
     }
 
-    if (methodInput.value === "Banking" && !bankNameInput.value.trim()) {
-        alert("🏦 ကျေးဇူးပြု၍ ဘဏ်နာမည် (ဥပမာ- Kpay) ထည့်သွင်းပေးပါ။");
-        return;
+    let finalBankName = "";
+    if (methodInput.value === "Banking") {
+        if (bankSelect.value === "Other") {
+            if (!customBankInput.value.trim()) {
+                alert("✏️ ကျေးဇူးပြု၍ ဘဏ်နာမည် ရိုက်ထည့်ပေးပါ။");
+                return;
+            }
+            finalBankName = customBankInput.value.trim();
+        } else {
+            finalBankName = bankSelect.value;
+        }
+    } else {
+        finalBankName = "Cash";
     }
 
     let cleanAmount = convertBurmeseToEnglish(amountInput.value);
@@ -97,7 +119,7 @@ function addTransaction(type) {
         date: formattedDate, 
         time: formattedTime,
         method: methodInput.value,
-        bankName: bankNameInput.value.trim() // ဘဏ်နာမည် ထည့်သွင်းမှတ်သားခြင်း
+        bankName: finalBankName 
     };
 
     transactions.push(new_item);
@@ -110,7 +132,7 @@ function addTransaction(type) {
 
     amountInput.value = '';
     descInput.value = '';
-    bankNameInput.value = '';
+    customBankInput.value = '';
 
     if (navigator.onLine) {
         syncOfflineDataToGoogle();
@@ -129,7 +151,7 @@ function syncOfflineDataToGoogle() {
         date: item_to_sync.date,   
         time: item_to_sync.time,
         method: item_to_sync.method,
-        bankName: item_to_sync.bankName // Google Sheet သို့ ဘဏ်နာမည်ပါ လှမ်းပို့ရန်
+        bankName: item_to_sync.bankName 
     };
 
     fetch(google_script_url, {
@@ -174,7 +196,6 @@ function cleanTime(timeStr) {
     }
     return s;
 }
-
 function render() {
     const list = document.getElementById('transaction-list');
     list.innerHTML = '';
@@ -184,7 +205,7 @@ function render() {
     let bankingBalance = 0;
     let cashBalance = 0;
 
-    // လက်ကျန်ငွေများကို စာရင်းအားလုံးပေါ် အခြေခံ၍ အရင်တွက်ချက်ခြင်း
+    // ၁။ စာရင်းစုစုပေါင်းတွေကို အရင်တွက်ချက်ခြင်း
     transactions.forEach(t => {
         const amt = Number(t.amount);
         const m = t.method ? t.method : "Banking";
@@ -200,24 +221,66 @@ function render() {
         }
     });
 
-    // 🔍 ရက်စွဲ နှင့် စာသား (မှတ်ချက်/ဘဏ်နာမည်) ဖြင့် အဆင့်မြင့် ပူးတွဲစစ်ထုတ်ခြင်း
+    // ၂။ 🔍 အဆင့်မြင့် Filter စစ်ထုတ်မှုအပိုင်း
     const filterDate = document.getElementById('filter-date').value; 
+    const filterBank = document.getElementById('filter-bank').value;
     const filterText = document.getElementById('filter-text').value.toLowerCase().trim();
+
+    let filteredSelectedBankBalance = 0; // ဘဏ်တစ်ခုချင်းစီရဲ့ သီးသန့်လက်ကျန်တွက်ရန်
 
     const displayedTransactions = transactions.filter(t => {
         const matchDate = filterDate ? (cleanDate(t.date) === filterDate) : true;
         
+        // ဘဏ်အမျိုးအစား စစ်ဆေးခြင်း
+        let matchBank = true;
+        const bName = t.bankName ? t.bankName : "";
+        if (filterBank === "Cash") {
+            matchBank = (t.method === "Cash" || bName === "Cash");
+        } else if (filterBank === "Other") {
+            const staticBanks = ["Kpay", "Wavepay", "AYAPay", "CBPay", "KBZ Bank", "CB Bank", "AYA Bank", "Cash"];
+            matchBank = (t.method === "Banking" && !staticBanks.includes(bName));
+        } else if (filterBank !== "All") {
+            matchBank = (bName === filterBank);
+        }
+
+        // စာသားမှတ်ချက် ရှာဖွေခြင်း
         const desc = t.description ? t.description.toLowerCase() : "";
-        const bank = t.bankName ? t.bankName.toLowerCase() : "";
-        const matchText = filterText ? (desc.includes(filterText) || bank.includes(filterText)) : true;
+        const matchText = filterText ? desc.includes(filterText) : true;
         
-        return matchDate && matchText;
+        return matchDate && matchBank && matchText;
     });
+
+    // ၃။ ရွေးချယ်ထားတဲ့ ဘဏ်ရဲ့ လက်ကျန်ငွေ သီးသန့်တွက်ချက်ခြင်း
+    if (filterBank !== "All") {
+        transactions.forEach(t => {
+            let isThisBank = false;
+            const bName = t.bankName ? t.bankName : "";
+            if (filterBank === "Cash" && (t.method === "Cash" || bName === "Cash")) isThisBank = true;
+            else if (filterBank === "Other") {
+                const staticBanks = ["Kpay", "Wavepay", "AYAPay", "CBPay", "KBZ Bank", "CB Bank", "AYA Bank", "Cash"];
+                if (t.method === "Banking" && !staticBanks.includes(bName)) isThisBank = true;
+            } else if (bName === filterBank) {
+                isThisBank = true;
+            }
+
+            if (isThisBank) {
+                if (t.type === 'ဝင်ငွေ') filteredSelectedBankBalance += Number(t.amount);
+                else filteredSelectedBankBalance -= Number(t.amount);
+            }
+        });
+        
+        const balDiv = document.getElementById('filter-balance-div');
+        balDiv.style.display = "block";
+        balDiv.innerHTML = `💡 ရွေးထားသော အမျိုးအစား၏ လက်ကျန်စုစုပေါင်း: <span style="color:#2ecc71;">${filteredSelectedBankBalance.toLocaleString()} ကျပ်</span>`;
+    } else {
+        document.getElementById('filter-balance-div').style.display = "none";
+    }
 
     if (displayedTransactions.length === 0) {
         list.innerHTML = '<li>📭 ရှာဖွေမှုနှင့် ကိုက်ညီသော မှတ်တမ်းမရှိသေးပါ။</li>';
     }
 
+    // ၄။ မျက်နှာပြင်ပေါ်တင်ပြခြင်း
     displayedTransactions.forEach(t => {
         const li = document.createElement('li');
         li.classList.add(t.type === 'ဝင်ငွေ' ? 'inc' : 'exp');
@@ -228,8 +291,11 @@ function render() {
         const displayDate = cleanDate(t.date);
         const displayTime = cleanTime(t.time);
         
-        const bName = t.bankName ? ` (${t.bankName})` : "";
-        const methodType = t.method === "Cash" ? "💵 Cash" : `🏦 Banking${bName}`;
+        let bankShowName = t.bankName ? t.bankName : "Banking";
+        if (bankShowName === "Kpay") bankShowName = "KBZ Pay";
+        if (bankShowName === "Wavepay") bankShowName = "Wave Pay";
+        
+        const methodType = t.method === "Cash" ? "💵 Cash" : `🏦 ${bankShowName}`;
 
         li.innerHTML = `
             <div>
@@ -250,9 +316,9 @@ function render() {
     document.getElementById('cash-balance').innerText = cashBalance.toLocaleString() + " ကျပ်";
     document.getElementById('net-balance').innerText = (bankingBalance + cashBalance).toLocaleString() + " ကျပ်";
 }
-
 function clearFilter() {
     document.getElementById('filter-date').value = ''; 
+    document.getElementById('filter-bank').value = 'All';
     document.getElementById('filter-text').value = ''; 
     render(); 
 }
