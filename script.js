@@ -1,5 +1,4 @@
-// ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
-const google_script_url = "https://script.google.com/macros/s/AKfycbzEzRmewtz3q93A6GkaHTk9xgsRtGwW1PUkP3Fpp7MwoOp1f0S0qjrinyw31djjWUDr/exec";
+const google_script_url = "သင်ရလာတဲ့_Google_Web_App_URL_ကို_ဒီမှာထည့်ပါ";
 
 let current_phone = localStorage.getItem('logged_phone') ? localStorage.getItem('logged_phone') : "";
 let current_acc_type = localStorage.getItem('logged_acc_type') ? localStorage.getItem('logged_acc_type') : "";
@@ -18,7 +17,6 @@ function checkLoginStatus() {
         document.getElementById('main-app').style.display = "block";
         document.getElementById('active-user-display').innerText = `📱 ${current_phone} (${current_acc_type})`;
         
-        // ဖုန်းနံပါတ်နှင့် အကောင့်အလိုက် localstorage သီးခြားခွဲသိမ်းဆည်းခြင်း
         transactions = localStorage.getItem(`off_tx_${current_phone}_${current_acc_type}`) ? JSON.parse(localStorage.getItem(`off_tx_${current_phone}_${current_acc_type}`)) : [];
         unsynced_items = localStorage.getItem(`un_syn_${current_phone}_${current_acc_type}`) ? JSON.parse(localStorage.getItem(`un_syn_${current_phone}_${current_acc_type}`)) : [];
         
@@ -34,19 +32,50 @@ function checkLoginStatus() {
 
 function loginUser() {
     const phoneInput = document.getElementById('user-phone').value.trim();
-    const accTypeInput = document.getElementById('user-acc-type').value;
+    const loginBtn = document.getElementById('login-btn');
     
     if (!phoneInput) {
         alert("❌ ကျေးဇူးပြု၍ ဖုန်းနံပါတ် အရင်ရိုက်ထည့်ပါ!");
         return;
     }
     
-    localStorage.setItem('logged_phone', phoneInput);
-    localStorage.setItem('logged_acc_type', accTypeInput);
-    current_phone = phoneInput;
-    current_acc_type = accTypeInput;
+    if (!navigator.onLine) {
+        alert("🌐 အကောင့်အသစ်ဝင်ရန် သို့မဟုတ် အကောင့်စစ်ဆေးရန် အင်တာနက် လိုအပ်ပါသည်!");
+        return;
+    }
     
-    checkLoginStatus();
+    loginBtn.innerText = "⏳ စစ်ဆေးနေပါသည်...";
+    loginBtn.disabled = true;
+
+    // 📡 Google Sheet ဆီကို လှမ်းစစ်ခိုင်းခြင်း
+    fetch(google_script_url, {
+        method: "POST",
+        body: JSON.stringify({ action: "check_login", phoneNumber: phoneInput })
+    })
+    .then(res => res.json())
+    .then(response => {
+        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်";
+        loginBtn.disabled = false;
+        
+        if (response.status === "approved") {
+            // အကယ်၍ အောင်မြင်ရင် Sheet ကပေးတဲ့ Acc Type အတိုင်း (Acc1 သို့မဟုတ် Acc2) Auto မှတ်သားမည်
+            localStorage.setItem('logged_phone', phoneInput);
+            localStorage.setItem('logged_acc_type', response.accType);
+            current_phone = phoneInput;
+            current_acc_type = response.accType;
+            
+            alert(`🎉 အကောင့်ဝင်ရောက်မှု အောင်မြင်သည်။ သင့်အား [${response.accType}] အဖြစ် သတ်မှတ်ပေးလိုက်ပါသည်။`);
+            checkLoginStatus();
+        } else {
+            // ၃ လုံးမြောက်ဆိုရင် ပိတ်ပင်မည်
+            alert(response.message);
+        }
+    })
+    .catch(err => {
+        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်";
+        loginBtn.disabled = false;
+        alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
+    });
 }
 
 function logoutUser() {
