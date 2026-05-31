@@ -1,5 +1,5 @@
 // ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
-const google_script_url = "https://script.google.com/macros/s/AKfycbzEzRmewtz3q93A6GkaHTk9xgsRtGwW1PUkP3Fpp7MwoOp1f0S0qjrinyw31djjWUDr/exec";
+const google_script_url = "သင်ရလာတဲ့_Google_Web_App_URL_ကို_ဒီမှာထည့်ပါ";
 
 let current_phone = localStorage.getItem('logged_phone') ? localStorage.getItem('logged_phone') : "";
 let current_acc_type = localStorage.getItem('logged_acc_type') ? localStorage.getItem('logged_acc_type') : "";
@@ -48,25 +48,19 @@ function checkLoginStatus() {
         document.getElementById('admin-panel').style.display = "none";
     }
 }
-// အကောင့်ဝင်ရန် လုပ်ဆောင်ချက် (စစ်ဆေးနေပါသည် ခလုတ်အား အရောင်ပြောင်းလဲခြင်းစနစ်ပါဝင်သည်)
+// အကောင့်ဝင်ရန် လုပ်ဆောင်ချက်
 function loginUser() {
     let phoneInput = document.getElementById('user-phone').value.trim();
     let passInput = document.getElementById('user-password').value.trim();
     const loginBtn = document.getElementById('login-btn');
     
-    // မြန်မာဂဏန်း ရိုက်ခဲ့လျှင် အင်္ဂလိပ်ဂဏန်းသို့ အော်တိုပြောင်းခြင်း
     phoneInput = convertMyanmarToEnglishDigits(phoneInput);
     passInput = convertMyanmarToEnglishDigits(passInput);
     
-    if (!phoneInput || !passInput) {
-        alert("❌ ကျေးဇူးပြု၍ ဖုန်းနံပါတ်နှင့် ဝင်ခွင့်ကုဒ် နှစ်ခုလုံး ဖြည့်သွင်းပါ!"); return;
-    }
+    if (!phoneInput || !passInput) { alert("❌ ကျေးဇူးပြု၍ ဖုန်းနံပါတ်နှင့် ဝင်ခွင့်ကုဒ် နှစ်ခုလုံး ဖြည့်သွင်းပါ!"); return; }
     if (!navigator.onLine) { alert("🌐 အကောင့်ဝင်ရောက်ရန် အင်တာနက် လိုအပ်ပါသည်!"); return; }
     
-    // ✨ [စတင်စစ်ဆေးချိန်] - စာသားပြောင်းပြီး ခလုတ်ကိုပါ အရောင်လှလှလေး ပြောင်းလဲလိုက်ခြင်း
-    loginBtn.innerText = "⏳ စစ်ဆေးနေပါသည်..."; 
-    loginBtn.disabled = true;
-    loginBtn.classList.add("btn-loading"); // CSS က အရောင်အသစ်လှလှလေးကို လှမ်းယူသုံးခြင်း
+    loginBtn.innerText = "⏳ စစ်ဆေးနေပါသည်..."; loginBtn.disabled = true; loginBtn.classList.add("btn-loading");
 
     fetch(google_script_url, {
         method: "POST",
@@ -74,10 +68,7 @@ function loginUser() {
     })
     .then(res => res.json())
     .then(response => {
-        // ✨ [စစ်ဆေးပြီးချိန်] - ခလုတ်ကို မူလအခြေအနေအတိုင်း ပြန်ပြောင်းခြင်း
-        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; 
-        loginBtn.disabled = false;
-        loginBtn.classList.remove("btn-loading"); // အရောင်ဟောင်း ပြန်ပြောင်းခြင်း
+        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; loginBtn.disabled = false; loginBtn.classList.remove("btn-loading");
         
         if (response.status === "approved") {
             localStorage.setItem('logged_phone', phoneInput);
@@ -92,11 +83,8 @@ function loginUser() {
         } else { alert(response.message); }
     })
     .catch(err => {
-        // ✨ [အမှားအယွင်းတက်ချိန်] - ခလုတ်ကို မူလအခြေအနေအတိုင်း ပြန်ပြောင်းခြင်း
-        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; 
-        loginBtn.disabled = false;
-        loginBtn.classList.remove("btn-loading");
-        alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
+        loginBtn.innerText = "🔐 အကောင့်အတည်ပြုမည်"; loginBtn.disabled = false; loginBtn.classList.remove("btn-loading");
+        alert("❌ ချက်ဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
     });
 }
 
@@ -114,17 +102,22 @@ function logoutUser() {
     checkLoginStatus();
 }
 
-// Admin က အသုံးပြုသူ User အသစ် တိုးပေးရန်
+// 🔐 အသုံးပြုသူ User အသစ် တိုးရန် တောင်းဆိုခြင်း (Main Admin Password တောင်းခံသည့်စနစ်)
 function adminRegisterUser() {
     let rPhone = document.getElementById('reg-phone').value.trim();
     let rPass = document.getElementById('reg-password').value.trim();
     
-    // မြန်မာဂဏန်း ရိုက်ခဲ့လျှင်လည်း အင်္ဂလိပ်ဂဏန်းသို့ အော်တိုပြောင်းခြင်း
     rPhone = convertMyanmarToEnglishDigits(rPhone);
     rPass = convertMyanmarToEnglishDigits(rPass);
     
     if (!rPhone || !rPass) { alert("❌ ဖုန်းနံပါတ်နှင့် Password ဖြည့်ပါ!"); return; }
     if (!navigator.onLine) { alert("🌐 အင်တာနက် ချိတ်ဆက်ထားရန် လိုအပ်သည်!"); return; }
+
+    const adminVerifyPass = prompt("🔑 ဤအကောင့်အသစ်ကို စောင့်ဆိုင်းစာရင်းသို့ တင်သွင်းရန် Admin Password ကို ရိုက်ထည့်ပါ:");
+    if (adminVerifyPass === null) return;
+    if (adminVerifyPass.trim() !== "038858") {
+        alert("❌ Admin Password မှားယွင်းနေသဖြင့် အကောင့်တိုးခွင့် မရှိပါ။"); return;
+    }
     
     fetch(google_script_url, {
         method: "POST",
@@ -133,9 +126,10 @@ function adminRegisterUser() {
     .then(res => res.json())
     .then(response => {
         alert(response.message);
-        if (response.status === "success") {
+        if (response.status === "pending" || response.status === "success") {
             document.getElementById('reg-phone').value = "";
             document.getElementById('reg-password').value = "";
+            if(current_acc_type === "Admin") { fetchPendingUsers(); }
         }
     })
     .catch(err => alert("❌ အကောင့်တိုး၍ မရသေးပါ။ ပြန်ကြိုးစားကြည့်ပါ။"));
@@ -146,7 +140,6 @@ function addTransaction(type) {
     const descInput = document.getElementById('description').value.trim();
     const methodInput = document.getElementById('method').value;
     
-    // ပမာဏကိုလည်း မြန်မာဂဏန်းရိုက်ခဲ့လျှင် အင်္ဂလိပ်ပြောင်းပေးရန်
     amountInput = convertMyanmarToEnglishDigits(amountInput);
 
     let bankNameInput = "Cash";
@@ -171,65 +164,49 @@ function addTransaction(type) {
         bankName: bankNameInput
     };
 
-    transactions.unshift(newTx);
-    saveToLocal(); render();
+    if (navigator.onLine) {
+        fetch(google_script_url, {
+            method: "POST",
+            body: JSON.stringify({ action: "add", phoneNumber: current_phone, ...newTx })
+        })
+        .then(res => res.json())
+        .then(resData => {
+            alert(resData.message);
+            if (resData.status === "success") {
+                transactions.unshift(newTx); saveToLocal(); render();
+            }
+        });
+    } else {
+        alert("🌐 အော့ဖ်လိုင်းဖြစ်နေပါသဖြင့် စာရင်းသွင်း၍မရနိုင်ပါ။ အင်တာနက်ချိတ်ဆက်မှု လိုအပ်သည်။");
+    }
 
     document.getElementById('amount').value = "";
     document.getElementById('description').value = "";
-
-    if (navigator.onLine) { sendDataToGoogle(newTx); } 
-    else {
-        unsynced_items.push(newTx); saveToLocal();
-        alert("⚠️ အော့ဖ်လိုင်းဖြစ်နေ၍ ဖုန်းထဲတွင်သာ သိမ်းထားပါသည်။ လိုင်းရလျှင် Sheet သို့ Auto ပို့ပေးပါမည်။");
-    }
 }
 
-// Google Sheet သို့ ဒေတာပို့ရန်
-function sendDataToGoogle(item) {
-    fetch(google_script_url, {
-        method: "POST",
-        body: JSON.stringify({ action: "add", phoneNumber: current_phone, ...item })
-    }).catch(err => { unsynced_items.push(item); saveToLocal(); });
-}
+function sendDataToGoogle(item) {} // Background sync ဖန်ရှင်ဟောင်းနေရာ (ဒုက္ခမပေးရန် ချန်ထားခဲ့ပါသည်)
 
 // 🔐 စာရင်းမှတ်တမ်းဖျက်ရန် (လုံခြုံရေး Password စနစ်ဖြင့်)
 function deleteTransaction(id) {
     const deletePass = prompt("🔑 ဤစာရင်းအား ဖြတ်ပစ်ရန်အတွက် လုံခြုံရေး Password ကို ရိုက်ထည့်ပါ:");
-    
-    if (deletePass === null) return; // Cancel နှိပ်ရင် ဘာမှမလုပ်ဘဲ ပြန်ထွက်မည်
-    
-    if (!deletePass.trim()) {
-        alert("❌ Password ရိုက်ထည့်ရန် လိုအပ်ပါသည်!"); return;
-    }
+    if (deletePass === null) return;
+    if (!deletePass.trim()) { alert("❌ Password ရိုက်ထည့်ရန် လိုအပ်ပါသည်!"); return; }
+    if (!navigator.onLine) { alert("🌐 စာရင်းဖျက်ရန်အတွက် အင်တာနက်ချိတ်ဆက်မှု လိုအပ်ပါသည်!"); return; }
 
-    if (!navigator.onLine) { 
-        alert("🌐 စာရင်းဖျက်ရန်အတွက် အင်တာနက်ချိတ်ဆက်မှု လိုအပ်ပါသည်!"); return; 
-    }
-
-    // Google Sheet ဆီသို့ ID ရော၊ ရိုက်လိုက်တဲ့ Password ပါ ပို့ပြီး စစ်ခိုင်းမည်
     fetch(google_script_url, {
         method: "POST",
-        body: JSON.stringify({ 
-            action: "delete", 
-            phoneNumber: current_phone, 
-            id: id,
-            deletePassword: deletePass.trim()
-        })
+        body: JSON.stringify({ action: "delete", phoneNumber: current_phone, id: id, deletePassword: deletePass.trim() })
     })
     .then(res => res.json())
     .then(response => {
         if (response.status === "success") {
             alert("🗑️ စာရင်းကို အောင်မြင်စွာ ဖျက်သိမ်းပြီးပါပြီ။");
-            // ဖုန်းထဲက စာရင်းထဲမှာပါ လိုက်ဖျက်ပြီး ပြန်ပြခြင်း
             transactions = transactions.filter(t => t.id.toString() !== id.toString());
             saveToLocal(); render();
-        } else {
-            alert(response.message); // ❌ Password မှားရင်ဖြစ်ဖြစ်၊ မအောင်မြင်ရင်ပြမည့်စာ
-        }
-    })
-    .catch(err => alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ပြန်ကြိုးစားကြည့်ပါ။"));
+        } else { alert(response.message); }
+    });
 }
-// Google Sheet ဆီမှ စာရင်းဟောင်းများအားလုံးကို ဆွဲယူဖတ်ရှုရန်
+
 function fetchDataFromGoogleSheets() {
     if (!navigator.onLine) return;
     fetch(`${google_script_url}?phoneNumber=${current_phone}&accType=${current_acc_type}`)
@@ -239,14 +216,8 @@ function fetchDataFromGoogleSheets() {
     });
 }
 
-// အင်တာနက်ပြန်ရချိန်တွင် Offline စာရင်းများကို Auto လှမ်းပို့ရန်
-function syncOfflineDataToGoogle() {
-    if (unsynced_items.length === 0) return;
-    let itemsToSync = [...unsynced_items]; unsynced_items = []; saveToLocal();
-    itemsToSync.forEach(item => { sendDataToGoogle(item); });
-}
+function syncOfflineDataToGoogle() {}
 
-// ဖုန်းမှတ်ဉာဏ်ထဲ (Local Storage) သိမ်းဆည်းသည့် ဖန်ရှင်
 function saveToLocal() {
     localStorage.setItem(`off_tx_${current_phone}_${current_acc_type}`, JSON.stringify(transactions));
     localStorage.setItem(`un_syn_${current_phone}_${current_acc_type}`, JSON.stringify(unsynced_items));
@@ -308,9 +279,74 @@ function render() {
         filterDiv.innerHTML = `🔍 ရှာဖွေထားသောပြကွက်လက်ကျန်: <strong style="color:${(filteredIncome - filteredExpense) >= 0 ? '#27ae60':'#e74c3c'}">${(filteredIncome - filteredExpense).toLocaleString()} ကျပ်</strong><br>
         <small>(ဝင်ငွေ: +${filteredIncome.toLocaleString()} | ထွက်ငွေ: -${filteredExpense.toLocaleString()})</small>`;
     } else { filterDiv.style.display = "none"; }
+
+    // Admin ဝင်ထားပါက အကောင့်သစ် စောင့်ဆိုင်းစာရင်းကိုပါ ဆွဲတင်ပြသမည်
+    if (current_acc_type === "Admin") { fetchPendingUsers(); }
 }
 
-// Filter ရှင်းလင်းရန်
+// ⏳ Admin ကြည့်ရန် ခွင့်ပြုချက်စောင့်ဆိုင်းနေသော အကောင့်အသစ်များအား ဆွဲယူပြသခြင်း
+function fetchPendingUsers() {
+    if (!navigator.onLine || current_acc_type !== "Admin") return;
+    
+    fetch(`${google_script_url}?phoneNumber=${current_phone}&accType=${current_acc_type}&getPendingUsers=true`)
+    .then(res => res.json())
+    .then(data => {
+        const uList = document.getElementById('admin-pending-users-list');
+        uList.innerHTML = "";
+        if (!data || data.length === 0) { uList.innerHTML = "<li style='font-size:13px; color:gray;'>စောင့်ဆိုင်းနေသော အကောင့်သစ်မရှိပါ။</li>"; return; }
+        
+        data.forEach(u => {
+            const li = document.createElement('li');
+            li.style.background = "#e3fafc";
+            li.style.padding = "10px";
+            li.style.marginBottom = "10px";
+            li.style.borderRadius = "6px";
+            li.style.borderLeft = "5px solid #0c8599";
+            li.style.fontSize = "13px";
+            li.style.display = "flex";
+            li.style.justify = "space-between";
+            li.style.alignItems = "center";
+            
+            li.innerHTML = `
+                <div>
+                    📱 ဖုန်းနံပါတ်: <strong>${u.requestedPhone}</strong><br>
+                    🔑 Password: <code>${u.requestedPassword}</code>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="adminUserApprovalAction('${u.id}', 'approve')" style="background:#2ecc71; padding:5px 8px; font-size:11px; width:auto;">✅ ခွင့်ပြု</button>
+                    <button onclick="adminUserApprovalAction('${u.id}', 'reject')" style="background:#e74c3c; padding:5px 8px; font-size:11px; width:auto;">❌ ပယ်ဖျက်</button>
+                </div>
+            `;
+            uList.appendChild(li);
+        });
+    });
+}
+
+// 🔐 အကောင့်သစ်ကို ခွင့်ပြုမည် (Approve) သို့မဟုတ် ပယ်ဖျက်မည်ကို နှိပ်သည့်အခါ လုပ်ဆောင်ချက် (Admin Password စစ်ဆေးခြင်းပါဝင်သည်)
+function adminUserApprovalAction(id, subAction) {
+    if (!navigator.onLine) { alert("အင်တာနက် လိုအပ်ပါသည်။"); return; }
+
+    if (subAction === "approve") {
+        const adminApprovePass = prompt("🔑 ဤအကောင့်အသစ်အား Users စာရင်းထဲသို့ လုံးဝအတည်ပြုထည့်သွင်းရန် Admin Password ရိုက်ထည့်ပါ:");
+        if (adminApprovePass === null) return;
+        if (adminApprovePass.trim() !== "038858") {
+            alert("❌ Admin Password မှားယွင်းနေသဖြင့် ခွင့်ပြုခွင့်မရှိပါ။"); return;
+        }
+    } else {
+        if (!confirm("⚠️ ဤအကောင့်တောင်းဆိုမှုကို ပယ်ဖျက်ရန် သေချာပါသလား?")) return;
+    }
+
+    fetch(google_script_url, {
+        method: "POST",
+        body: JSON.stringify({ action: "admin_action_user_approval", id: id, subAction: subAction })
+    })
+    .then(res => res.json())
+    .then(resData => {
+        alert(resData.message);
+        fetchPendingUsers();
+    });
+}
+
 function clearFilter() {
     document.getElementById('filter-date').value = "";
     document.getElementById('filter-bank').value = "All";
@@ -318,7 +354,6 @@ function clearFilter() {
     render();
 }
 
-// Banking သို့မဟုတ် Cash အလိုက် ရွေးချယ်မှုအကွက် ပြောင်းလဲရန်
 function toggleBankNameInput() {
     const method = document.getElementById('method').value;
     const bankSelect = document.getElementById('bank-select');
@@ -327,7 +362,6 @@ function toggleBankNameInput() {
     } else { bankSelect.style.display = "block"; toggleCustomBankInput(); }
 }
 
-// "အခြားဘဏ်" ရွေးချယ်မှု စစ်ဆေးရန်
 function toggleCustomBankInput() {
     const bankSelect = document.getElementById('bank-select').value;
     document.getElementById('custom-bank-name').style.display = (bankSelect === "Other") ? "block" : "none";
