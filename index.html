@@ -10,34 +10,55 @@
     <div class="container">
         <h2>📊 ဝင်ငွေ/ထွက်ငွေ စာရင်း</h2>
         
-        <div class="balance-board">
-            <div class="card income">
-                <h3>ဝင်ငွေ</h3>
-                <p id="total-income">0.00</p>
+        <div class="balance-board" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+            <div class="card income" style="grid-column: span 1; background: #2ecc71; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                <h3 style="margin:0; font-size: 14px;">ဝင်ငွေစုစုပေါင်း</h3>
+                <p id="total-income" style="margin: 5px 0 0 0; font-weight: bold;">0</p>
             </div>
-            <div class="card expense">
-                <h3>ထွက်ငွေ</h3>
-                <p id="total-expense">0.00</p>
+            <div class="card expense" style="grid-column: span 1; background: #e74c3c; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                <h3 style="margin:0; font-size: 14px;">ထွက်ငွေစုစုပေါင်း</h3>
+                <p id="total-expense" style="margin: 5px 0 0 0; font-weight: bold;">0</p>
             </div>
-            <div class="card balance">
-                <h3>လက်ကျန်</h3>
-                <p id="net-balance">0.00</p>
+            <div class="card banking-bal" style="background: #9b59b6; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                <h3 style="margin:0; font-size: 14px;">🏦 Banking လက်ကျန်</h3>
+                <p id="banking-balance" style="margin: 5px 0 0 0; font-weight: bold;">0</p>
+            </div>
+            <div class="card cash-bal" style="background: #e67e22; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                <h3 style="margin:0; font-size: 14px;">💵 Cash လက်ကျန်</h3>
+                <p id="cash-balance" style="margin: 5px 0 0 0; font-weight: bold;">0</p>
+            </div>
+            <div class="card balance" style="grid-column: span 2; background: #34495e; color: white; padding: 10px; border-radius: 8px; text-align: center;">
+                <h3 style="margin:0; font-size: 14px;">💰 စုစုပေါင်း လက်ကျန်ငွေ</h3>
+                <p id="net-balance" style="margin: 5px 0 0 0; font-weight: bold; font-size: 18px;">0</p>
             </div>
         </div>
 
         <div class="form-container">
+            <select id="method" onchange="toggleBankNameInput()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; font-weight: bold;">
+                <option value="Banking">🏦 Banking (Kpay / Wave / Bank)</option>
+                <option value="Cash">💵 Cash (လက်ကျန်ငွေသား)</option>
+            </select>
+
+            <input type="text" id="bank-name" placeholder="ဘဏ်နာမည် (ဥပမာ - Kpay, Wave, CB)" style="display: block; margin-bottom: 10px; border-color: #9b59b6;">
+
             <input type="text" id="amount" placeholder="ပမာဏ (ဥပမာ - ၁၅၀၀၀ သို့မဟုတ် 15000)">
-            <input type="text" id="description" placeholder="အကြောင်းအရာ (ဥပမာ- လစာ၊ စားစရိတ်)">
+            <input type="text" id="description" placeholder="အကြောင်းအရာ/မှတ်ချက် (ဥပမာ- လစာ၊ စားစရိတ်)">
             <div class="btn-group">
                 <button onclick="addTransaction('ဝင်ငွေ')" class="btn-inc">➕ ဝင်ငွေထည့်</button>
                 <button onclick="addTransaction('ထွက်ငွေ')" class="btn-exp">➖ ထွက်ငွေထည့်</button>
             </div>
         </div>
 
-        <div style="margin-top: 20px; background: #eceff1; padding: 10px; border-radius: 8px;">
-            <label for="filter-date" style="font-weight: bold; font-size: 14px; color: #34495e;">📅 ရက်စွဲဖြင့် ပြန်ရှာရန်:</label>
-            <input type="date" id="filter-date" onchange="render()" style="margin: 5px 0 0 0; padding: 8px;">
-            <button onclick="clearFilter()" style="background-color: #7f8c8d; padding: 5px; font-size: 12px; margin-top: 5px; width: auto; float: right;">ပြက္ခဒိန်ဖျက်မည်</button>
+        <div style="margin-top: 20px; background: #eceff1; padding: 12px; border-radius: 8px; border-left: 5px solid #34495e;">
+            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🔍 မှတ်တမ်းများ ပြန်ရှာရန်</h4>
+            
+            <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">📅 ရက်စွဲဖြင့် ရှာရန်:</label>
+            <input type="date" id="filter-date" onchange="render()" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc;">
+            
+            <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">✍️ အကြောင်းအရာ/ဘဏ်နာမည်ဖြင့် ရှာရန်:</label>
+            <input type="text" id="filter-text" oninput="render()" placeholder="ဥပမာ - လစာ ၊ Kpay (သို့) အလွတ်ထားပါ" style="width:100%; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #ccc;">
+            
+            <button onclick="clearFilter()" style="background-color: #e74c3c; padding: 6px 12px; font-size: 12px; margin-top: 5px; width: auto; float: right; color: white; border: none; border-radius: 4px; cursor: pointer;">🔍 ရှာဖွေမှုအားလုံး ဖျက်မည်</button>
             <div style="clear: both;"></div>
         </div>
 
