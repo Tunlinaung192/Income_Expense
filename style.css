@@ -181,3 +181,18 @@ button {
     font-size: 13px;
     text-align: center;
 }
+/* ⏳ အကောင့်စစ်ဆေးနေစဉ် ပေါ်မည့် ခလုတ်အရောင်အလှဒီဇိုင်း */
+.btn-loading {
+    background-color: #f39c12 !important; /* လိမ္မော်ရောင်ရင့်ရင့် (သို့မဟုတ် မိမိကြိုက်ရာကာလာ ပြောင်းနိုင်သည်) */
+    color: #ffffff !important;           /* စာလုံးအရောင် အဖြူ */
+    cursor: not-allowed;                  /* နှိပ်လို့မရကြောင်း ပြသသည့် Mouse ပုံစံ */
+    opacity: 0.9;
+    animation: pulse 1.5s infinite;       /* မှိတ်တုတ်မှိတ်တုတ် ဖြစ်စေမည့် စနစ် */
+}
+
+/* ခလုတ်လေး ငြိမ့်ငြိမ့်လေး မှိတ်တုတ်မှိတ်တုတ် ဖြစ်စေရန် Animation စနစ် */
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
