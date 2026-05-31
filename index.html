@@ -39,7 +39,18 @@
                 <option value="Cash">💵 Cash (လက်ကျန်ငွေသား)</option>
             </select>
 
-            <input type="text" id="bank-name" placeholder="ဘဏ်နာမည် (ဥပမာ - Kpay, Wave, CB)" style="display: block; margin-bottom: 10px; border-color: #9b59b6;">
+            <select id="bank-select" onchange="toggleCustomBankInput()" style="display: block; width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #9b59b6; font-size: 14px; font-weight: bold;">
+                <option value="Kpay">📱 KBZ Pay (Kpay)</option>
+                <option value="Wavepay">📱 Wave Pay</option>
+                <option value="AYAPay">📱 AYA Pay</option>
+                <option value="CBPay">📱 CB Pay</option>
+                <option value="KBZ Bank">🏦 KBZ Bank Account</option>
+                <option value="CB Bank">🏦 CB Bank Account</option>
+                <option value="AYA Bank">🏦 AYA Bank Account</option>
+                <option value="Other">✏️ အခြားဘဏ် (စိတ်ကြိုက်ရိုက်ရန်)</option>
+            </select>
+
+            <input type="text" id="custom-bank-name" placeholder="ဘဏ်နာမည် ရိုက်ထည့်ပါ (ဥပမာ - Yoma)" style="display: none; margin-bottom: 10px; border-color: #9b59b6;">
 
             <input type="text" id="amount" placeholder="ပမာဏ (ဥပမာ - ၁၅၀၀၀ သို့မဟုတ် 15000)">
             <input type="text" id="description" placeholder="အကြောင်းအရာ/မှတ်ချက် (ဥပမာ- လစာ၊ စားစရိတ်)">
@@ -50,15 +61,31 @@
         </div>
 
         <div style="margin-top: 20px; background: #eceff1; padding: 12px; border-radius: 8px; border-left: 5px solid #34495e;">
-            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🔍 မှတ်တမ်းများ ပြန်ရှာရန်</h4>
+            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🔍 အဆင့်မြင့် စာရင်းပြန်ရှာရန်</h4>
             
             <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">📅 ရက်စွဲဖြင့် ရှာရန်:</label>
             <input type="date" id="filter-date" onchange="render()" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc;">
             
-            <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">✍️ အကြောင်းအရာ/ဘဏ်နာမည်ဖြင့် ရှာရန်:</label>
-            <input type="text" id="filter-text" oninput="render()" placeholder="ဥပမာ - လစာ ၊ Kpay (သို့) အလွတ်ထားပါ" style="width:100%; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #ccc;">
+            <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">🏦 ဘဏ်အမျိုးအစားဖြင့် ခွဲကြည့်ရန်:</label>
+            <select id="filter-bank" onchange="render()" style="width:100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold;">
+                <option value="All">အားလုံးပြရန် (All)</option>
+                <option value="Cash">💵 Cash (ငွေသားကြည့်မည်)</option>
+                <option value="Kpay">📱 Kpay ကြည့်မည်</option>
+                <option value="Wavepay">📱 Wave Pay ကြည့်မည်</option>
+                <option value="AYAPay">📱 AYA Pay ကြည့်မည်</option>
+                <option value="CBPay">📱 CB Pay ကြည့်မည်</option>
+                <option value="KBZ Bank">🏦 KBZ Bank ကြည့်မည်</option>
+                <option value="CB Bank">🏦 CB Bank ကြည့်မည်</option>
+                <option value="AYA Bank">🏦 AYA Bank ကြည့်မည်</option>
+                <option value="Other">⚠️ အခြားဘဏ်စာရင်းများ ကြည့်မည်</option>
+            </select>
+
+            <label style="font-weight: bold; font-size: 13px; color: #34495e; display:block; margin-bottom: 4px;">✍️ အကြောင်းအရာ/မှတ်ချက်ဖြင့် ရှာရန်:</label>
+            <input type="text" id="filter-text" oninput="render()" placeholder="ဥပမာ - လစာ ၊ စားစရိတ်" style="width:100%; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #ccc;">
             
-            <button onclick="clearFilter()" style="background-color: #e74c3c; padding: 6px 12px; font-size: 12px; margin-top: 5px; width: auto; float: right; color: white; border: none; border-radius: 4px; cursor: pointer;">🔍 ရှာဖွေမှုအားလုံး ဖျက်မည်</button>
+            <div id="filter-balance-div" style="display:none; margin-top: 10px; padding: 8px; background: #fff; border-radius: 4px; border: 1px solid #bdc3c7; font-weight: bold; color: #2c3e50; font-size: 13px;"></div>
+
+            <button onclick="clearFilter()" style="background-color: #e74c3c; padding: 6px 12px; font-size: 12px; margin-top: 8px; width: auto; float: right; color: white; border: none; border-radius: 4px; cursor: pointer;">🔍 ရှာဖွေမှုအားလုံး ဖျက်မည်</button>
             <div style="clear: both;"></div>
         </div>
 
