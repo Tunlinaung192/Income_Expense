@@ -1,4 +1,5 @@
-const google_script_url = "https://script.google.com/macros/s/AKfycbzEzRmewtz3q93A6GkaHTk9xgsRtGwW1PUkP3Fpp7MwoOp1f0S0qjrinyw31djjWUDr/exec";
+// ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
+const google_script_url = "သင်ရလာတဲ့_Google_Web_App_URL_ကို_ဒီမှာထည့်ပါ";
 
 let current_phone = localStorage.getItem('logged_phone') ? localStorage.getItem('logged_phone') : "";
 let current_acc_type = localStorage.getItem('logged_acc_type') ? localStorage.getItem('logged_acc_type') : "";
@@ -47,7 +48,6 @@ function loginUser() {
     loginBtn.innerText = "⏳ စစ်ဆေးနေပါသည်...";
     loginBtn.disabled = true;
 
-    // 📡 Google Sheet ဆီကို လှမ်းစစ်ခိုင်းခြင်း
     fetch(google_script_url, {
         method: "POST",
         body: JSON.stringify({ action: "check_login", phoneNumber: phoneInput })
@@ -58,7 +58,6 @@ function loginUser() {
         loginBtn.disabled = false;
         
         if (response.status === "approved") {
-            // အကယ်၍ အောင်မြင်ရင် Sheet ကပေးတဲ့ Acc Type အတိုင်း (Acc1 သို့မဟုတ် Acc2) Auto မှတ်သားမည်
             localStorage.setItem('logged_phone', phoneInput);
             localStorage.setItem('logged_acc_type', response.accType);
             current_phone = phoneInput;
@@ -67,7 +66,6 @@ function loginUser() {
             alert(`🎉 အကောင့်ဝင်ရောက်မှု အောင်မြင်သည်။ သင့်အား [${response.accType}] အဖြစ် သတ်မှတ်ပေးလိုက်ပါသည်။`);
             checkLoginStatus();
         } else {
-            // ၃ လုံးမြောက်ဆိုရင် ပိတ်ပင်မည်
             alert(response.message);
         }
     })
@@ -77,15 +75,26 @@ function loginUser() {
         alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ခေတ္တစောင့်ပြီး ပြန်ကြိုးစားပါ။");
     });
 }
-
 function logoutUser() {
-    if (confirm("🏃 အကောင့်ထဲမှ ထွက်ရန် သေချာပါသလား?")) {
-        localStorage.removeItem('logged_phone');
-        localStorage.removeItem('logged_acc_type');
-        current_phone = "";
-        current_acc_type = "";
-        document.getElementById('user-phone').value = "";
-        checkLoginStatus();
+    if (!navigator.onLine) {
+        alert("🌐 အကောင့်ထဲမှ ထွက်ရန်နှင့် နေရာပြန်လွှတ်ပေးရန် အင်တာနက် လိုအပ်ပါသည်!");
+        return;
+    }
+
+    if (confirm("🏃 အကောင့်ထဲမှ ထွက်ရန် သေချာပါသလား? (ထွက်လိုက်ပါက အခြားဖုန်းမှ ဝင်ရောက်ခွင့် ရရှိမည်ဖြစ်ပါသည်)")) {
+        fetch(google_script_url, {
+            method: "POST",
+            body: JSON.stringify({ action: "logout_release", phoneNumber: current_phone, accType: current_acc_type })
+        })
+        .then(() => {
+            localStorage.removeItem('logged_phone');
+            localStorage.removeItem('logged_acc_type');
+            current_phone = "";
+            current_acc_type = "";
+            document.getElementById('user-phone').value = "";
+            checkLoginStatus();
+        })
+        .catch(err => alert("❌ ထွက်၍မရသေးပါ။ အင်တာနက်လိုင်း ပြန်ကောင်းမှ ကြိုးစားပေးပါ။"));
     }
 }
 
@@ -138,7 +147,6 @@ function fetchDataFromGoogleSheets() {
         })
         .catch(error => console.log("အော့ဖ်လိုင်း ဆက်သုံးနိုင်ပါသည်"));
 }
-
 function addTransaction(type) {
     const amountInput = document.getElementById('amount');
     const descInput = document.getElementById('description');
@@ -180,14 +188,13 @@ function addTransaction(type) {
 
     if (navigator.onLine) { syncOfflineDataToGoogle(); }
 }
+
 function syncOfflineDataToGoogle() {
     if (!navigator.onLine || unsynced_items.length === 0 || !current_phone) return;
 
     const item_to_sync = unsynced_items[0];
     const payload = {
-        action: "add",
-        phoneNumber: current_phone, 
-        accType: current_acc_type,   
+        action: "add", phoneNumber: current_phone, accType: current_acc_type,   
         id: item_to_sync.id, type: item_to_sync.type, amount: item_to_sync.amount,
         description: item_to_sync.description, date: item_to_sync.date, time: item_to_sync.time,
         method: item_to_sync.method, bankName: item_to_sync.bankName 
@@ -229,14 +236,11 @@ function cleanTime(timeStr) {
 }
 function render() {
     const list = document.getElementById('transaction-list');
-    list.innerHTML = '';
-    if(!current_phone) return;
-    
+    list.innerHTML = ''; if(!current_phone) return;
     let totalIncome = 0, totalExpense = 0, bankingBalance = 0, cashBalance = 0;
 
     transactions.forEach(t => {
-        const amt = Number(t.amount);
-        const m = t.method ? t.method : "Banking";
+        const amt = Number(t.amount); const m = t.method ? t.method : "Banking";
         if (t.type === 'ဝင်ငွေ') {
             totalIncome += amt; if (m === "Banking") bankingBalance += amt; else cashBalance += amt;
         } else {
@@ -256,9 +260,7 @@ function render() {
         else if (filterBank === "Other") {
             matchBank = (t.method === "Banking" && !["Kpay", "Wavepay", "AYAPay", "CBPay", "KBZ Bank", "CB Bank", "AYA Bank", "Cash"].includes(bName));
         } else if (filterBank !== "All") matchBank = (bName === filterBank);
-
-        const matchText = filterText ? (t.description ? t.description.toLowerCase().includes(filterText) : false) : true;
-        return matchDate && matchBank && matchText;
+        return matchDate && matchBank && (filterText ? (t.description ? t.description.toLowerCase().includes(filterText) : false) : true);
     });
 
     if (filterBank !== "All") {
@@ -267,7 +269,6 @@ function render() {
             if (filterBank === "Cash" && (t.method === "Cash" || bName === "Cash")) isThisBank = true;
             else if (filterBank === "Other" && t.method === "Banking" && !["Kpay", "Wavepay", "AYAPay", "CBPay", "KBZ Bank", "CB Bank", "AYA Bank", "Cash"].includes(bName)) isThisBank = true;
             else if (bName === filterBank) isThisBank = true;
-
             if (isThisBank) { if (t.type === 'ဝင်ငွေ') filteredSelectedBankBalance += Number(t.amount); else filteredSelectedBankBalance -= Number(t.amount); }
         });
         const balDiv = document.getElementById('filter-balance-div'); balDiv.style.display = "block";
@@ -308,11 +309,10 @@ function clearFilter() {
 function deleteItem(id) {
     const savedDeletePassword = localStorage.getItem('delete_password');
     if (!savedDeletePassword) {
-        const newPassword = prompt("🔑 စာရင်းဖျက်ရန် စကားဝှက်အသစ် သတ်ပါ:");
-        if (!newPassword || !newPassword.trim()) return;
+        const newPassword = prompt("🔑 စာရင်းဖျက်ရန် စကားဝှက်အသစ် သတ်ပါ:"); if (!newPassword || !newPassword.trim()) return;
         localStorage.setItem('delete_password', newPassword); alert("🎉 သတ်မှတ်ပြီးပါပြီ။"); return;
     }
-    const inputPassword = prompt("🔐 စကားဝှက် ရိုက်ထည့်ပါ:"); if (inputPassword !== savedDeletePassword) { alert("❌ မှားယွင်းနေပါသည်။"); return; }
+    if (prompt("🔐 စကားဝှက် ရိုက်ထည့်ပါ:") !== savedDeletePassword) { alert("❌ မှားယွင်းနေပါသည်။"); return; }
 
     if (confirm("⚠️ ဤမှတ်တမ်းကို အပြီးဖျက်မည်လား?")) {
         transactions = transactions.filter(t => t.id !== id);
@@ -320,9 +320,6 @@ function deleteItem(id) {
         unsynced_items = unsynced_items.filter(item => item.id !== id);
         localStorage.setItem(`un_syn_${current_phone}_${current_acc_type}`, JSON.stringify(unsynced_items));
         render();
-
-        if (navigator.onLine) {
-            fetch(google_script_url, { method: "POST", body: JSON.stringify({ action: "delete", phoneNumber: current_phone, accType: current_acc_type, id: id }) });
-        }
+        if (navigator.onLine) { fetch(google_script_url, { method: "POST", body: JSON.stringify({ action: "delete", phoneNumber: current_phone, accType: current_acc_type, id: id }) }); }
     }
 }
