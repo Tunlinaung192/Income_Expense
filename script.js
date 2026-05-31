@@ -1,5 +1,5 @@
 // ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
-const google_script_url = "သင်ရလာတဲ့_Google_Web_App_URL_ကို_ဒီမှာထည့်ပါ";
+const google_script_url = "https://script.google.com/macros/s/AKfycbzEzRmewtz3q93A6GkaHTk9xgsRtGwW1PUkP3Fpp7MwoOp1f0S0qjrinyw31djjWUDr/exec";
 
 // ဖုန်းမှတ်ဉာဏ် (Local Storage) ထဲမှ ဒေတာဟောင်းများ ရှိပါက ယူရန်
 let current_phone = localStorage.getItem('logged_phone') ? localStorage.getItem('logged_phone') : "";
