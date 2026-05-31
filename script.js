@@ -1,10 +1,11 @@
 // ⚠️ သင်ရရှိလာသော Google Web App URL ကို အောက်ကနေရာမှာ အစားထိုးပါ
-const google_script_url = "https://script.google.com/macros/s/AKfycbzEzRmewtz3q93A6GkaHTk9xgsRtGwW1PUkP3Fpp7MwoOp1f0S0qjrinyw31djjWUDr/exec";
+const google_script_url = "သင်ရလာတဲ့_Google_Web_App_URL_ကို_ဒီမှာထည့်ပါ";
 
 let transactions = localStorage.getItem('offline_transactions') ? JSON.parse(localStorage.getItem('offline_transactions')) : [];
 let unsynced_items = localStorage.getItem('unsynced_items') ? JSON.parse(localStorage.getItem('unsynced_items')) : [];
 
 window.onload = function() {
+    toggleBankNameInput(); // စဖွင့်ချင်း ဘဏ်နာမည်ရိုက်ကွက် ပြ/ဝှက် စစ်မယ်
     render(); 
     fetchDataFromGoogleSheets(); 
     
@@ -14,7 +15,18 @@ window.onload = function() {
     }
 };
 
-// မြန်မာဂဏန်းများကို အင်္ဂလိပ်ဂဏန်းသို့ ပြောင်းပေးသည့် Function
+// Banking သို့မဟုတ် Cash အလိုက် ဘဏ်နာမည်ရိုက်ကွက်ကို ပြ/ဝှက် လုပ်ပေးသည့် Function
+function toggleBankNameInput() {
+    const method = document.getElementById('method').value;
+    const bankNameInput = document.getElementById('bank-name');
+    if (method === "Banking") {
+        bankNameInput.style.display = "block";
+    } else {
+        bankNameInput.style.display = "none";
+        bankNameInput.value = ""; // Cash ဖြစ်သွားရင် ဘဏ်နာမည်ကို ဖျက်ပစ်မယ်
+    }
+}
+
 function convertBurmeseToEnglish(input) {
     const burmeseNumbers = ['၀', '၁', '၂', '၃', '၄', '၅', '၆', '၇', '၈', '၉'];
     let output = input.toString();
@@ -45,9 +57,16 @@ function fetchDataFromGoogleSheets() {
 function addTransaction(type) {
     const amountInput = document.getElementById('amount');
     const descInput = document.getElementById('description');
+    const methodInput = document.getElementById('method');
+    const bankNameInput = document.getElementById('bank-name');
     
     if (!amountInput.value || !descInput.value) {
         alert("📊 ပမာဏနှင့် အကြောင်းအရာကို ပြည့်စုံစွာဖြည့်ပါ။");
+        return;
+    }
+
+    if (methodInput.value === "Banking" && !bankNameInput.value.trim()) {
+        alert("🏦 ကျေးဇူးပြု၍ ဘဏ်နာမည် (ဥပမာ- Kpay) ထည့်သွင်းပေးပါ။");
         return;
     }
 
@@ -60,7 +79,6 @@ function addTransaction(type) {
         return;
     }
 
-    // 📅 နေ့စွဲကို YYYY-MM-DD ပုံစံ အတိအကျယူခြင်း
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -77,7 +95,9 @@ function addTransaction(type) {
         amount: parsedAmount,
         description: descInput.value,
         date: formattedDate, 
-        time: formattedTime  
+        time: formattedTime,
+        method: methodInput.value,
+        bankName: bankNameInput.value.trim() // ဘဏ်နာမည် ထည့်သွင်းမှတ်သားခြင်း
     };
 
     transactions.push(new_item);
@@ -90,6 +110,7 @@ function addTransaction(type) {
 
     amountInput.value = '';
     descInput.value = '';
+    bankNameInput.value = '';
 
     if (navigator.onLine) {
         syncOfflineDataToGoogle();
@@ -106,7 +127,9 @@ function syncOfflineDataToGoogle() {
         amount: item_to_sync.amount,
         description: item_to_sync.description,
         date: item_to_sync.date,   
-        time: item_to_sync.time    
+        time: item_to_sync.time,
+        method: item_to_sync.method,
+        bankName: item_to_sync.bankName // Google Sheet သို့ ဘဏ်နာမည်ပါ လှမ်းပို့ရန်
     };
 
     fetch(google_script_url, {
@@ -124,12 +147,9 @@ function syncOfflineDataToGoogle() {
     .catch(err => console.log("လိုင်းမတည်ငြိမ်သေးသဖြင့် ခေတ္တစောင့်ဆိုင်းနေပါသည်"));
 }
 
-// 📅 စာသားရှည်ကြီးတွေထဲကနေ YYYY-MM-DD ပုံစံ စစ်ထုတ်ပေးမည့် လုပ်ဆောင်ချက်
 function cleanDate(dateStr) {
     if (!dateStr) return "ရက်စွဲမရှိ";
     let s = dateStr.toString().trim();
-    
-    // အကယ်၍ Format က Fri May 29 2026 ပုံစံ ဖြစ်နေရင်
     if (s.length > 10 && (s.includes("GMT") || s.includes("00:00:00"))) {
         try {
             const d = new Date(s);
@@ -141,17 +161,14 @@ function cleanDate(dateStr) {
             }
         } catch(e){}
     }
-    // အကယ်၍ T ပါတဲ့ Standard format ဆိုရင် ဖြတ်ယူမယ်
     if (s.includes("T")) return s.split("T")[0];
     return s;
 }
 
-// 🕒 အချိန်ထဲက နှစ်ဟောင်းစာသားတွေကို သန့်စင်ပေးမည့် လုပ်ဆောင်ချက်
 function cleanTime(timeStr) {
     if (!timeStr) return "";
     let s = timeStr.toString().trim();
     if (s.includes("GMT") && s.includes(":")) {
-        // စာသားထဲက နာရီနဲ့ မိနစ် (ဥပမာ- 15:31) ကိုပဲ ဖြတ်ယူခြင်း
         let match = s.match(/\d{2}:\d{2}/);
         if (match) return match[0];
     }
@@ -164,16 +181,41 @@ function render() {
     
     let totalIncome = 0;
     let totalExpense = 0;
+    let bankingBalance = 0;
+    let cashBalance = 0;
 
+    // လက်ကျန်ငွေများကို စာရင်းအားလုံးပေါ် အခြေခံ၍ အရင်တွက်ချက်ခြင်း
+    transactions.forEach(t => {
+        const amt = Number(t.amount);
+        const m = t.method ? t.method : "Banking";
+        
+        if (t.type === 'ဝင်ငွေ') {
+            totalIncome += amt;
+            if (m === "Banking") bankingBalance += amt;
+            else cashBalance += amt;
+        } else {
+            totalExpense += amt;
+            if (m === "Banking") bankingBalance -= amt;
+            else cashBalance -= amt;
+        }
+    });
+
+    // 🔍 ရက်စွဲ နှင့် စာသား (မှတ်ချက်/ဘဏ်နာမည်) ဖြင့် အဆင့်မြင့် ပူးတွဲစစ်ထုတ်ခြင်း
     const filterDate = document.getElementById('filter-date').value; 
+    const filterText = document.getElementById('filter-text').value.toLowerCase().trim();
 
-    // ပြက္ခဒိန်နှင့် တိုက်စစ်ရန်အတွက် transactions တစ်ခုချင်းစီရဲ့ ရက်စွဲကို clean အရင်လုပ်ပြီးမှ filter စစ်ထုတ်မယ်
-    const displayedTransactions = filterDate 
-        ? transactions.filter(t => cleanDate(t.date) === filterDate) 
-        : transactions;
+    const displayedTransactions = transactions.filter(t => {
+        const matchDate = filterDate ? (cleanDate(t.date) === filterDate) : true;
+        
+        const desc = t.description ? t.description.toLowerCase() : "";
+        const bank = t.bankName ? t.bankName.toLowerCase() : "";
+        const matchText = filterText ? (desc.includes(filterText) || bank.includes(filterText)) : true;
+        
+        return matchDate && matchText;
+    });
 
     if (displayedTransactions.length === 0) {
-        list.innerHTML = '<li>📭 ဤရက်စွဲတွင် မှတ်တမ်းမရှိသေးပါ။</li>';
+        list.innerHTML = '<li>📭 ရှာဖွေမှုနှင့် ကိုက်ညီသော မှတ်တမ်းမရှိသေးပါ။</li>';
     }
 
     displayedTransactions.forEach(t => {
@@ -183,14 +225,16 @@ function render() {
         const is_unsynced = unsynced_items.some(item => item.id === t.id);
         const sync_icon = is_unsynced ? " ☁️ (Offline)" : "";
 
-        // ဒေတာတွေကို သန့်စင်ပြီးမှ မျက်နှာပြင်ပေါ် ပြသမယ်
         const displayDate = cleanDate(t.date);
         const displayTime = cleanTime(t.time);
+        
+        const bName = t.bankName ? ` (${t.bankName})` : "";
+        const methodType = t.method === "Cash" ? "💵 Cash" : `🏦 Banking${bName}`;
 
         li.innerHTML = `
             <div>
                 <span style="display: block; font-weight: bold;">${t.description}${sync_icon}</span>
-                <span style="font-size: 11px; color: #7f8c8d;">📅 ${displayDate} 🕒 ${displayTime}</span>
+                <span style="font-size: 11px; color: #7f8c8d;">📅 ${displayDate} 🕒 ${displayTime} | <b>${methodType}</b></span>
             </div>
             <div style="text-align: right;">
                 <b>${t.type === 'ဝင်ငွေ' ? '+' : '-'}${Number(t.amount).toLocaleString()} ကျပ်</b>
@@ -198,18 +242,18 @@ function render() {
             </div>
         `;
         list.appendChild(li);
-
-        if (t.type === 'ဝင်ငွေ') totalIncome += Number(t.amount);
-        else totalExpense += Number(t.amount);
     });
 
-    document.getElementById('total-income').innerText = totalIncome.toLocaleString();
-    document.getElementById('total-expense').innerText = totalExpense.toLocaleString();
-    document.getElementById('net-balance').innerText = (totalIncome - totalExpense).toLocaleString();
+    document.getElementById('total-income').innerText = totalIncome.toLocaleString() + " ကျပ်";
+    document.getElementById('total-expense').innerText = totalExpense.toLocaleString() + " ကျပ်";
+    document.getElementById('banking-balance').innerText = bankingBalance.toLocaleString() + " ကျပ်";
+    document.getElementById('cash-balance').innerText = cashBalance.toLocaleString() + " ကျပ်";
+    document.getElementById('net-balance').innerText = (bankingBalance + cashBalance).toLocaleString() + " ကျပ်";
 }
 
 function clearFilter() {
     document.getElementById('filter-date').value = ''; 
+    document.getElementById('filter-text').value = ''; 
     render(); 
 }
 
