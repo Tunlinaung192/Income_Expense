@@ -183,18 +183,42 @@ function sendDataToGoogle(item) {
     }).catch(err => { unsynced_items.push(item); saveToLocal(); });
 }
 
-// စာရင်းမှတ်တမ်းဖျက်ရန်
+// 🔐 စာရင်းမှတ်တမ်းဖျက်ရန် (လုံခြုံရေး Password စနစ်ဖြင့်)
 function deleteTransaction(id) {
-    if (!confirm("⚠️ ဤစာရင်းအား ဖြတ်ပစ်ရန် သေချာပါသလား?")) return;
-    transactions = transactions.filter(t => t.id.toString() !== id.toString());
-    saveToLocal(); render();
-
-    if (navigator.onLine) {
-        fetch(google_script_url, {
-            method: "POST",
-            body: JSON.stringify({ action: "delete", phoneNumber: current_phone, id: id })
-        });
+    const deletePass = prompt("🔑 ဤစာရင်းအား ဖြတ်ပစ်ရန်အတွက် လုံခြုံရေး Password ကို ရိုက်ထည့်ပါ:");
+    
+    if (deletePass === null) return; // Cancel နှိပ်ရင် ဘာမှမလုပ်ဘဲ ပြန်ထွက်မည်
+    
+    if (!deletePass.trim()) {
+        alert("❌ Password ရိုက်ထည့်ရန် လိုအပ်ပါသည်!"); return;
     }
+
+    if (!navigator.onLine) { 
+        alert("🌐 စာရင်းဖျက်ရန်အတွက် အင်တာနက်ချိတ်ဆက်မှု လိုအပ်ပါသည်!"); return; 
+    }
+
+    // Google Sheet ဆီသို့ ID ရော၊ ရိုက်လိုက်တဲ့ Password ပါ ပို့ပြီး စစ်ခိုင်းမည်
+    fetch(google_script_url, {
+        method: "POST",
+        body: JSON.stringify({ 
+            action: "delete", 
+            phoneNumber: current_phone, 
+            id: id,
+            deletePassword: deletePass.trim()
+        })
+    })
+    .then(res => res.json())
+    .then(response => {
+        if (response.status === "success") {
+            alert("🗑️ စာရင်းကို အောင်မြင်စွာ ဖျက်သိမ်းပြီးပါပြီ။");
+            // ဖုန်းထဲက စာရင်းထဲမှာပါ လိုက်ဖျက်ပြီး ပြန်ပြခြင်း
+            transactions = transactions.filter(t => t.id.toString() !== id.toString());
+            saveToLocal(); render();
+        } else {
+            alert(response.message); // ❌ Password မှားရင်ဖြစ်ဖြစ်၊ မအောင်မြင်ရင်ပြမည့်စာ
+        }
+    })
+    .catch(err => alert("❌ ချိတ်ဆက်မှု အဆင်မပြေပါ။ ပြန်ကြိုးစားကြည့်ပါ။"));
 }
 // Google Sheet ဆီမှ စာရင်းဟောင်းများအားလုံးကို ဆွဲယူဖတ်ရှုရန်
 function fetchDataFromGoogleSheets() {
