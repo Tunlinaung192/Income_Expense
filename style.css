@@ -1,18 +1,183 @@
-/* Input နှင့် Select Box များအတွက် စာလုံးအရောင် ပြင်ဆင်ခြင်း */
+/* ကမ္ဘာလုံးဆိုင်ရာ အခြေခံစနစ် */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 10px;
+    color: #2c3e50;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* ကတ်ပြားပုံစံ ဘောင်များ အလှဆင်ခြင်း */
+.card {
+    background: #ffffff;
+    padding: 18px;
+    margin-bottom: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* ထိပ်ဆုံးက အသုံးပြုသူအမည်ပြ ဘား */
+.user-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #34495e;
+    color: #ffffff;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+/* Input Boxes များကို အမည်းရောင်စာလုံး ရှင်းရှင်းလင်းလင်းဖြစ်စေရန် ပြုပြင်ခြင်း */
 input, select {
     width: 100%;
     padding: 12px;
-    margin-bottom: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
     font-size: 15px;
     box-sizing: border-box;
-    background-color: #ffffff !important; /* နောက်ခံ အဖြူ */
-    color: #000000 !important;           /* စာလုံး အရောင် အမည်း (ရှင်းရှင်းလင်းလင်း မြင်ရစေရန်) */
+    background-color: #ffffff !important;
+    color: #000000 !important; /* စာလုံးအရောင် လုံးဝအမည်း ပြောင်းထားပါသည် */
 }
 
 input:focus, select:focus {
     border-color: #3498db;
     outline: none;
-    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 0 5px rgba(52,152,219,0.3);
+}
+
+/* လက်ကျန်ငွေပြကွက်ကြီးအား အရောင်အသွေးဖြင့် ခွဲခြားခြင်း */
+.balance-card {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #ffffff;
+    text-align: center;
+}
+.balance-card h3 { margin: 0; font-size: 16px; opacity: 0.9; }
+.balance-card h1 { margin: 10px 0; font-size: 32px; font-weight: bold; }
+
+.balance-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+.balance-row div {
+    width: 48%;
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+/* စာသားအရောင်များ */
+.text-inc { color: #2ecc71 !important; font-weight: bold; font-size: 15px; }
+.text-exp { color: #e74c3c !important; font-weight: bold; font-size: 15px; }
+/* ဝင်ငွေ/ထွက်ငွေ ထည့်မည့် ခလုတ်ဒီဇိုင်းများ */
+.btn-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    transition: background 0.2s;
+}
+.btn-inc { background-color: #2ecc71; }
+.btn-inc:hover { background-color: #27ae60; }
+.btn-exp { background-color: #e74c3c; }
+.btn-exp:hover { background-color: #c0392b; }
+
+/* 📊 မှတ်တမ်းစာရင်းဇယားကွက် (List Items) အလှဆင်ခြင်း */
+#transaction-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#transaction-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border-left: 6px solid #ccc; /* အခြေခံ ဘယ်ဘက်လိုင်းကွက် */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+/* 🟢 ဝင်ငွေဖြစ်ပါက စိမ်းစိမ်းလင်းလင်း ပြသရန် */
+#transaction-list li.list-inc {
+    border-left-color: #2ecc71;
+    background-color: #f0fff4;
+}
+#transaction-list li.list-inc .list-amt {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+/* 🔴 ထွက်ငွေဖြစ်ပါက နီနီရဲရဲ ပြသရန် */
+#transaction-list li.list-exp {
+    border-left-color: #e74c3c;
+    background-color: #fff5f5;
+}
+#transaction-list li.list-exp .list-amt {
+    color: #c0392b;
+    font-weight: bold;
+}
+
+/* စာရင်း အသေးစိတ်စာသားများ */
+.list-details strong {
+    font-size: 15px;
+    color: #2c3e50;
+}
+.list-details small {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+.list-time {
+    font-size: 11px;
+    color: #95a5a6;
+}
+
+/* ဖျက်ရန် ❌ ခလုတ်ဒီဇိုင်း */
+.list-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.list-action button {
+    background: none;
+    color: #e74c3c;
+    border: none;
+    padding: 5px;
+    width: auto;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* ရှာဖွေမှု ပြကွက်လက်ကျန်ပြဘောင် */
+.filter-balance {
+    background: #e8f4f8;
+    border: 1px solid #bee5eb;
+    color: #055160;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-size: 13px;
+    text-align: center;
 }
